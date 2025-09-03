@@ -1,4 +1,6 @@
-<img width="512" height="512" alt="image" src="https://github.com/user-attachments/assets/86aba856-db4a-4d92-8436-3dc1483edab6" />PM SHRI PRATHMIK VIDHYAMANDIR PONSRI
+<img width="300" height="57" alt="image" src="https://github.com/user-attachments/assets/b2fb7d68-42d1-4262-9f2b-0592baaa51e6" />
+
+PM SHRI PRATHMIK VIDHYAMANDIR PONSRI
 
 
 # Garud AI Robot: Web Control Panel & Guide
