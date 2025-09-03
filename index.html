@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Garud AI Robot Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "vite": "https://aistudiocdn.com/vite@^7.1.4",
+    "path": "https://aistudiocdn.com/path@^0.12.7",
+    "@/": "./",
+    "url": "https://aistudiocdn.com/url@^0.11.4"
+  }
+}
+</script>
+<style>
+  @keyframes rgb-text-glow {
+    0% { text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000, 0 0 15px #ff7300, 0 0 20px #ff7300; }
+    25% { text-shadow: 0 0 5px #ffff00, 0 0 10px #ffff00, 0 0 15px #48ff00, 0 0 20px #48ff00; }
+    50% { text-shadow: 0 0 5px #00ffd5, 0 0 10px #00ffd5, 0 0 15px #002bff, 0 0 20px #002bff; }
+    75% { text-shadow: 0 0 5px #7a00ff, 0 0 10px #7a00ff, 0 0 15px #ff00c8, 0 0 20px #ff00c8; }
+    100% { text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000, 0 0 15px #ff7300, 0 0 20px #ff7300; }
+  }
+  .animate-rgb-text-glow {
+    animation: rgb-text-glow 8s ease-in-out infinite;
+  }
+  
+  @keyframes rgb-border-glow {
+    0% { box-shadow: 0 0 3px #ff0000, 0 0 5px #ff0000, inset 0 0 3px #ff0000; }
+    25% { box-shadow: 0 0 3px #ffff00, 0 0 5px #ffff00, inset 0 0 3px #ffff00; }
+    50% { box-shadow: 0 0 3px #00ffd5, 0 0 5px #00ffd5, inset 0 0 3px #00ffd5; }
+    75% { box-shadow: 0 0 3px #7a00ff, 0 0 5px #7a00ff, inset 0 0 3px #7a00ff; }
+    100% { box-shadow: 0 0 3px #ff0000, 0 0 5px #ff0000, inset 0 0 3px #ff0000; }
+  }
+  .animate-rgb-border-glow {
+    animation: rgb-border-glow 6s ease-in-out infinite;
+  }
+</style>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body class="bg-gray-900 text-gray-100">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

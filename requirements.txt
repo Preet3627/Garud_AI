@@ -1,0 +1,27 @@
+# --- Installation ---
+#
+# == Raspberry Pi (Target Robot) ==
+# 1. Install system dependencies for audio:
+#    sudo apt-get update && sudo apt-get install -y portaudio19-dev
+# 2. Install Python packages:
+#    pip install -r requirements.txt
+#
+# == Windows/macOS (For Dev/UI testing) ==
+# The following packages are Raspberry Pi specific and should be commented out or skipped:
+# - yahboom-robot-hat
+# - RPi.GPIO
+# You can then run 'pip install -r requirements.txt' (after commenting them out).
+# Note: PyAudio may require special installation steps on Windows.
+
+Flask
+Flask-Cors
+google-generativeai
+python-dotenv
+yahboom-robot-hat
+opencv-python-headless
+numpy
+gunicorn
+RPi.GPIO
+SpeechRecognition
+PyAudio
+Pillow

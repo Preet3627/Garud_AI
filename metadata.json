@@ -1,0 +1,7 @@
+{
+  "name": "Garud AI Robot",
+  "description": "A web-based control panel and setup guide for the Garud AI Robot. Operate the robot and configure its custom responses and language over the network.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
