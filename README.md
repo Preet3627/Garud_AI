@@ -5,11 +5,22 @@ PM SHRI PRATHMIK VIDHYAMANDIR PONSRI
 
 # Garud AI Robot: Web Control Panel & Guide
 
+<img width="2112" height="1984" alt="Gemini_Generated_Image_svu71lsvu71lsvu7 (2)" src="https://github.com/user-attachments/assets/39f8daef-5c66-438b-b92f-48ed1c01cbf2" />
+
 This repository contains the source code for a web-based **control panel and setup guide** to transform the [Yahboom RASPBOT V2](https://www.yahboom.net/study/RASPBOT-V2) into an intelligent, interactive AI assistant named "Garud". This project is fully compatible with the **RASPBOT V2 Superior kit**.
 
 This project has evolved into a client-server architecture. The web application in this repository is the **frontend (the client)**, which you run in your browser. It communicates with a **Python web server (the backend)** that you will build and run on the robot itself.
 
 This project was developed for **PM SHRI PRATHMIK VIDHYAMANDIR PONSRI**.
+<img width="1366" height="768" alt="Screenshot (44)" src="https://github.com/user-attachments/assets/f143dcb7-6f61-4d4e-80fc-26798aa49847" />
+
+<img width="1366" height="768" alt="Screenshot (45)" src="https://github.com/user-attachments/assets/311924d9-dd96-4c3e-a967-b469e87f6e8f" />
+
+<img width="1366" height="768" alt="Screenshot (46)" src="https://github.com/user-attachments/assets/5ddbb3cc-8362-4857-8dd5-802a19358e44" />
+
+
+<img width="1366" height="768" alt="Screenshot (47)" src="https://github.com/user-attachments/assets/71b2603a-9a25-4d62-a649-40c47a55b18b" />
+
 
 ## Architecture Overview
 
