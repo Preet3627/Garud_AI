@@ -5,7 +5,8 @@ PM SHRI PRATHMIK VIDHYAMANDIR PONSRI
 
 # Garud AI Robot: Web Control Panel & Guide
 
-<img width="2112" height="1984" alt="untitled-0" src="https://github.com/user-attachments/assets/71ec88bc-ba4e-4b31-aaa5-96a97b0573a9" />
+<img width="2112" height="1125" alt="untitled-0" src="https://github.com/user-attachments/assets/2c76b0c3-f03b-4d8d-bcab-4e61e8bb8e9f" />
+
 
 
 This repository contains the source code for a web-based **control panel and setup guide** to transform the [Yahboom RASPBOT V2](https://www.yahboom.net/study/RASPBOT-V2) into an intelligent, interactive AI assistant named "Garud". This project is fully compatible with the **RASPBOT V2 Superior kit**.
