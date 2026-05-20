@@ -32,4 +32,4 @@ jobs:
       - name: Build and Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run electron:build -- -p always
+        run: npm run electron:build -- -p always --draft
