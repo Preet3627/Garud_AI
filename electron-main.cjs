@@ -17,10 +17,11 @@ function createWindow() {
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
-    // Open the DevTools.
-    // mainWindow.webContents.openDevTools();
+    mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+    mainWindow.loadFile('dist/index.html');
+    // Enable DevTools in production temporarily to debug the blank screen
+    mainWindow.webContents.openDevTools();
   }
 }
 
