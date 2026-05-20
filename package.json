@@ -38,15 +38,16 @@
     "directories": {
       "output": "release"
     },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "Preet3627",
-        "repo": "Garud_AI",
-        "releaseType": "draft",
-        "releaseNotesFile": "RELEASE_NOTES.md"
-      }
-    ],
+    "releaseInfo": {
+      "releaseName": "Garud AI Robot v0.1.0",
+      "releaseNotesFile": "RELEASE_NOTES.md"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Preet3627",
+      "repo": "Garud_AI",
+      "releaseType": "draft"
+    },
     "files": [
       "dist/**/*",
       "electron-main.cjs",
