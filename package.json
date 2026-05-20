@@ -38,7 +38,10 @@
     "directories": {
       "output": "release"
     },
-    "publish": "github",
+    "publish": {
+      "provider": "github",
+      "releaseType": "draft"
+    },
     "releaseInfo": {
       "releaseNotesFile": "RELEASE_NOTES.md"
     },
