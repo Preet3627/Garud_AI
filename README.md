@@ -1,10 +1,10 @@
-# 🤖 Garud AI Robot (v0.1.1)
+# 🤖 Garud AI Robot (v0.1.2)
 
-[![Version](https://img.shields.io/badge/version-0.1.1-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases)
+[![Version](https://img.shields.io/badge/version-0.1.2-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases)
 [![Build Status](https://github.com/Preet3627/Garud_AI/actions/workflows/release.yml/badge.svg)](https://github.com/Preet3627/Garud_AI/actions)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue.svg)](https://github.com/Preet3627/Garud_AI)
 [![Framework](https://img.shields.io/badge/framework-Electron%20%2B%20React%20%2B%20Python-orange.svg)](https://github.com/Preet3627/Garud_AI)
-[![AI SDK](https://img.shields.io/badge/AI%20SDK-Pipecat%20%2B%20Vercel%20%2B%20Ollama-purple.svg)](https://github.com/Preet3627/Garud_AI)
+[![AI SDK](https://img.shields.io/badge/AI%20SDK-Ollama%20%2B%20OpenAI%20%2B%20Gemini%20%2B%20Claude-purple.svg)](https://github.com/Preet3627/Garud_AI)
 
 Garud AI is a state-of-the-art, multi-modal robot control system designed for the **Raspbot V2**. It combines a sleek Electron desktop interface with a high-performance Python backend to create a truly seamless human-robot interaction experience.
 
@@ -19,25 +19,41 @@ The goal of Garud AI is to bridge the gap between complex robotics and intuitive
 ### 🖥️ Native Desktop Experience
 Built with **Electron**, the Garud AI dashboard provides a smooth, low-latency control center for your robot across macOS (Intel/Silicon), Windows, and Linux.
 
-### 🎙️ Advanced Voice Intelligence (Pipecat)
-- **Full-Duplex Dialogue**: Natural, two-way conversations without needing to wait for the robot to finish speaking.
-- **Voice Activity Detection (VAD)**: Smart listening that distinguishes between background noise and intentional commands.
-- **Interruption Support**: Stop the robot mid-sentence just by speaking to it.
+### 🎙️ Voice AI Assistant (NEW in v0.1.2)
+- **Hands-Free Mode**: Always-listening with custom wake word support (e.g., "Hey Jarvis", "Hello Garud")
+- **Push-to-Talk**: Quick voice queries without wake word
+- **Automatic Speech Recognition** via browser's native Web Speech API
+- **Text-to-Speech** responses for natural voice interaction
+- **Stunning AI Orb Animation**: Rotating rings, scanning beam, particle bursts, orbit dots
+- **Voice Waveform Equalizer**: Animated bars that pulse with speech activity
+- **Floating Voice Panel**: Real-time listening status overlay
 
-### 🧠 Local & Cloud AI Fusion
-- **Ollama Integration**: Run powerful models like Llama3 or Mistral locally on your machine and pipe their intelligence directly to the robot.
-- **Vercel AI SDK**: Provides a unified interface for both local and cloud-based AI providers.
-- **Gemini Vision**: High-level scene description and complex reasoning powered by Google's Gemini models.
+### 🧠 Multi-Provider AI Brain
+- **5 AI Providers**: Ollama, OpenAI, Gemini, Claude, Custom API
+- **Live Ollama model fetching** from local `/api/tags` endpoint
+- **Real API calls** with proper authentication for all providers
+- **AI Chat Interface** with typing animations and glowing text reveals
+- **Temperature control** for response creativity
 
-### 👁️ Real-time Computer Vision
-- **Object Detection**: Powered by YOLOv3-tiny for identifying people, cars, books, and more in real-time.
-- **Proactive Greeting**: The robot can recognize you and say "Namaste" automatically!
-- **Autopilot Modes**: Includes Obstacle Avoidance, Traffic Recognition, and Car Following.
+### 🧪 Testing Mode (NEW in v0.1.2)
+Use ALL AI features without a physical robot. Perfect for development and experimentation.
 
-### ⚡ Seamless Automation (v0.1.1)
-- **Auto-Discovery**: Uses mDNS (Bonjour) to find your robot on the network instantly—no IP configuration required.
-- **Remote Deployment**: Push updates to your robot's Python code with a single click.
-- **SSH Control**: Start, stop, and monitor the robot's Python server directly from the desktop app.
+### 📷 Device Camera (Vision Lab)
+- **Real WebRTC camera** with live FPS counter
+- **Multiple camera support** — select from dropdown
+- **Real FPS measurement** (not hardcoded)
+
+### 👁️ Real-time Computer Vision (Robot)
+- **Object Detection**: Powered by YOLOv3-tiny for identifying people, cars, books, and more
+- **Proactive Greeting**: Recognizes faces and greets in Gujarati
+- **Autopilot Modes**: Obstacle Avoidance, Traffic Recognition, Car Following, Explore
+
+### ⚡ Robot Connectivity
+- **Auto-Discovery**: Uses mDNS (Bonjour) to find your robot on the network
+- **Real connection health checks** with periodic keepalive pings
+- **Subnet scanning** for robots without Bonjour
+- **SSH Remote Deployment**: Start, stop, and monitor the robot's server
+- **Real** (not simulated) connection status
 
 ---
 
@@ -91,6 +107,7 @@ If you encounter the "Damaged App" error due to the unsigned developer build:
 
 ## 📦 Release History
 
+- [v0.1.2 - Voice AI & Testing Mode](./release-notes/v0.1.2.md)
 - [v0.1.1 - Auto-Pilot Update](./release-notes/v0.1.1.md)
 - [v0.1.0 - Initial Desktop Release](./release-notes/v0.1.0.md)
 
@@ -103,4 +120,5 @@ If you encounter the "Damaged App" error due to the unsigned developer build:
 **Developed by**: The Garud AI Team
 
 ---
+
 *Built with speed, precision, and Dhurandhar energy.* 🏁
