@@ -44,11 +44,14 @@ jobs:
             VERSION="v$(node -p "require('./package.json').version")"
           fi
 
+          # Normalize version to lowercase (handle uppercase V prefix)
+          VERSION="$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')"
+
           # Create draft release if it doesn't exist, or get existing one
           gh release view "$VERSION" --json id 2>/dev/null || \
             gh release create "$VERSION" \
               --title "$VERSION" \
-              --notes-file "release-notes/$(echo $VERSION | sed 's/^v//').md" \
+              --notes-file "release-notes/$VERSION.md" \
               --draft \
               --generate-notes
         shell: bash
