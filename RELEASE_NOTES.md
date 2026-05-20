@@ -17,9 +17,13 @@ We are proud to present the first official release of the **Garud AI Robot** des
 
 ### 📦 Installation
 Download the binary for your platform from the assets below.
-- **macOS**: `.dmg` or `.zip`
+- **macOS**: `.dmg` or `.zip` (See troubleshooting below for "Damaged App" error)
 - **Windows**: `.exe` (NSIS) or `.zip`
 - **Linux**: `.AppImage`, `.deb`, or `.zip`
+
+### ⚠️ macOS "Damaged App" Fix
+Since this is an unsigned developer build, macOS may flag it. If you get a "damaged" error, run this in Terminal:
+`sudo xattr -rd com.apple.quarantine /Applications/Garud\ AI\ Robot.app`
 
 ---
 *Built with speed and precision by the Garud AI Team.*

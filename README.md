@@ -60,6 +60,16 @@ You can now connect Garud to your local Ollama instance directly from the **AI S
 2. Enter your **Base URL** (default: `http://localhost:11434`).
 3. Specify the **Model Name** (e.g., `llama3`).
 
+## ⚠️ macOS Troubleshooting (Damaged App Error)
+
+If you see an error saying the app is "damaged" or can't be opened because it's from an unidentified developer:
+1. Open your **Terminal**.
+2. Run the following command:
+   ```bash
+   sudo xattr -rd com.apple.quarantine /Applications/Garud\ AI\ Robot.app
+   ```
+3. Alternatively, **Right-click (Control-click)** the app and select **Open**.
+
 ## 📦 Release v0.1.0 Notes
 
 - Initial release of the Electron desktop application.
