@@ -28,6 +28,33 @@ const App: React.FC = () => {
   const [wakeWord, setWakeWord] = useState<string>('hey garud');
   const [ollamaUrl, setOllamaUrl] = useState<string>('http://localhost:11434');
   const [ollamaModel, setOllamaModel] = useState<string>('llama3');
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [isFetchingModels, setIsFetchingModels] = useState<boolean>(false);
+
+  useEffect(() => {
+    fetchOllamaModels();
+  }, [ollamaUrl]);
+
+  const fetchOllamaModels = async () => {
+    if (!ollamaUrl) return;
+    setIsFetchingModels(true);
+    try {
+      const response = await fetch(`${ollamaUrl}/api/tags`);
+      if (response.ok) {
+        const data = await response.json();
+        const models = data.models.map((m: any) => m.name);
+        setOllamaModels(models);
+        if (models.length > 0 && !models.includes(ollamaModel)) {
+          setOllamaModel(models[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch Ollama models:", error);
+      setOllamaModels([]);
+    } finally {
+      setIsFetchingModels(false);
+    }
+  };
 
   const logsEndRef = useRef<HTMLDivElement>(null);
   const connectSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -352,14 +379,38 @@ const App: React.FC = () => {
                                 />
                             </div>
                             <div>
-                                <span className="text-xs text-gray-500 mb-1 block">Model Name</span>
-                                <input
-                                    type="text"
-                                    value={ollamaModel}
-                                    onChange={(e) => setOllamaModel(e.target.value)}
-                                    className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                                    placeholder="e.g., llama3, mistral"
-                                />
+                                <div className="flex items-center justify-between mb-1">
+                                    <span className="text-xs text-gray-500 block">Model Name</span>
+                                    <button 
+                                        onClick={fetchOllamaModels}
+                                        className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors uppercase font-bold"
+                                        disabled={isFetchingModels}
+                                    >
+                                        {isFetchingModels ? 'Fetching...' : 'Refresh List'}
+                                    </button>
+                                </div>
+                                {ollamaModels.length > 0 ? (
+                                    <select
+                                        value={ollamaModel}
+                                        onChange={(e) => setOllamaModel(e.target.value)}
+                                        className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    >
+                                        {ollamaModels.map((model) => (
+                                            <option key={model} value={model}>{model}</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={ollamaModel}
+                                        onChange={(e) => setOllamaModel(e.target.value)}
+                                        className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                        placeholder="e.g., llama3, mistral"
+                                    />
+                                )}
+                                {ollamaModels.length === 0 && !isFetchingModels && (
+                                    <p className="text-[10px] text-red-400 mt-1">No local models found. Is Ollama running?</p>
+                                )}
                             </div>
                         </div>
                     </div>
