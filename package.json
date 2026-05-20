@@ -43,7 +43,8 @@
         "provider": "github",
         "owner": "Preet3627",
         "repo": "Garud_AI",
-        "releaseType": "draft"
+        "releaseType": "draft",
+        "releaseNotesFile": "RELEASE_NOTES.md"
       }
     ],
     "files": [
