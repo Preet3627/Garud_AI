@@ -1,0 +1,30 @@
+name: Release App
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build and Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run electron:build -- -p always

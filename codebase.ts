@@ -1,5 +1,7 @@
 export const ROBOT_CODEBASE: Record<string, string> = {
   '.env': `API_KEY="YOUR_GEMINI_API_KEY_HERE"
+GROQ_API_KEY="YOUR_GROQ_API_KEY_HERE"
+OLLAMA_BASE_URL="http://localhost:11434"
 `,
   '.gitignore': `
 # Byte-compiled / optimized / DLL files
@@ -94,6 +96,11 @@ RPi.GPIO
 SpeechRecognition
 PyAudio
 Pillow
+pipecat-ai
+pipecat-ai[whisper,ollama,piper]
+requests
+langgraph
+langchain-openai
 `,
   'main.py': `import os
 import threading
@@ -403,6 +410,97 @@ if __name__ == '__main__':
         
     finally:
         cleanup()
+`,
+  'voice_agent.py': `import os
+import sys
+import asyncio
+import aiohttp
+from dotenv import load_dotenv
+
+from pipecat.frames.frames import EndFrame, TextFrame
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.runner import PipelineRunner
+from pipecat.pipeline.task import PipelineParams, PipelineTask
+from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
+from pipecat.services.openai import OpenAILLMService
+from pipecat.services.elevenlabs import ElevenLabsTTSService
+from pipecat.transports.services.helpers import DailyTransportHelper
+from pipecat.vad.silero import SileroVADAnalyzer
+
+# LangGraph Integration
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+
+load_dotenv()
+
+ROBOT_API_URL = "http://localhost:5001"
+
+async def control_robot(command: str, text: str = None):
+    """Sends a command to the Garud AI Robot API."""
+    async with aiohttp.ClientSession() as session:
+        async with session.post(f"{ROBOT_API_URL}/command", json={"command": command, "text": text}) as resp:
+            return await resp.json()
+
+# Define tools for the LangGraph Agent
+def move_forward():
+    """Moves the robot forward."""
+    return asyncio.run(control_robot("move_forward"))
+
+def move_backward():
+    """Moves the robot backward."""
+    return asyncio.run(control_robot("move_backward"))
+
+def stop_robot():
+    """Stops all robot movement."""
+    return asyncio.run(control_robot("stop"))
+
+def rotate_left():
+    """Rotates the robot to the left."""
+    return asyncio.run(control_robot("rotate_left"))
+
+def rotate_right():
+    """Rotates the robot to the right."""
+    return asyncio.run(control_robot("rotate_right"))
+
+tools = [move_forward, move_backward, stop_robot, rotate_left, rotate_right]
+llm = ChatOpenAI(model="gpt-4o", openai_api_key=os.getenv("OPENAI_API_KEY"))
+agent = create_react_agent(llm, tools)
+
+async def main():
+    async with aiohttp.ClientSession() as session:
+        # Initialize Pipecat Services
+        # Note: Using placeholders for some services, configure as needed
+        transport = DailyTransportHelper(...) 
+        
+        llm_service = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o")
+        tts_service = ElevenLabsTTSService(api_key=os.getenv("ELEVENLABS_API_KEY"), voice_id="...")
+
+        messages = [
+            {"role": "system", "content": "You are Garud, an AI Robot. You can move and interact with your environment. Use your tools to control the robot's hardware when asked."},
+        ]
+        context = OpenAILLMContext(messages)
+        context_aggregator = llm_service.create_context_aggregator(context)
+
+        pipeline = Pipeline([
+            transport.input(),
+            context_aggregator.user(),
+            llm_service,
+            tts_service,
+            transport.output(),
+            context_aggregator.assistant(),
+        ])
+
+        task = PipelineTask(pipeline, params=PipelineParams(allow_interruptions=True))
+
+        @transport.event_handler("on_first_participant_joined")
+        async def on_first_participant_joined(transport, participant):
+            await task.queue_frames([TextFrame("Hello! I am Garud. I am ready to help you.")])
+
+        runner = PipelineRunner()
+        await runner.run(task)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 `,
   'core/__init__.py': ``,
   'core/camera.py': `import cv2

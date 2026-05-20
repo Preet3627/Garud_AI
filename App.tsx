@@ -26,6 +26,8 @@ const App: React.FC = () => {
   const [newAnswer, setNewAnswer] = useState<string>('');
   
   const [wakeWord, setWakeWord] = useState<string>('hey garud');
+  const [ollamaUrl, setOllamaUrl] = useState<string>('http://localhost:11434');
+  const [ollamaModel, setOllamaModel] = useState<string>('llama3');
 
   const logsEndRef = useRef<HTMLDivElement>(null);
   const connectSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -290,28 +292,76 @@ const App: React.FC = () => {
             
              <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
                 <div className="flex items-center mb-4">
+                    <MicIcon className="h-5 w-5 mr-3 text-cyan-400" />
+                    <h3 className="text-lg font-semibold text-white">Voice Interaction (Pipecat)</h3>
+                </div>
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-900/50 rounded-md border border-gray-700">
+                        <span className="text-sm text-gray-300">Voice Agent Status</span>
+                        <span className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${isConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                            <span className={`h-2 w-2 rounded-full mr-2 ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
+                            {isConnected ? 'READY' : 'OFFLINE'}
+                        </span>
+                    </div>
+                    <p className="text-xs text-gray-500 leading-relaxed">
+                        Full-duplex voice interaction is powered by Pipecat and LangGraph. 
+                        The robot can now "Think" before acting on your voice commands.
+                    </p>
+                </div>
+            </div>
+
+            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
+                <div className="flex items-center mb-4">
                     <CogIcon className="h-5 w-5 mr-3 text-cyan-400" />
                     <h3 className="text-lg font-semibold text-white">AI Settings</h3>
                 </div>
-                <div className="space-y-3">
-                    <label htmlFor="wake-word" className="block text-sm font-medium text-gray-300">Custom Voice Wake Word</label>
-                    <div className="flex items-center space-x-2">
-                        <input
-                            id="wake-word"
-                            type="text"
-                            value={wakeWord}
-                            onChange={(e) => setWakeWord(e.target.value)}
-                            disabled={!isConnected}
-                            className="flex-grow bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50"
-                            placeholder="e.g., Hey Garud"
-                        />
-                        <button
-                            onClick={handleSetWakeUpWord}
-                            disabled={!isConnected || !wakeWord.trim()}
-                            className="px-4 py-2 text-sm bg-cyan-600 hover:bg-cyan-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
-                        >
-                            Save
-                        </button>
+                <div className="space-y-4">
+                    <div className="space-y-2">
+                        <label htmlFor="wake-word" className="block text-sm font-medium text-gray-300">Custom Voice Wake Word</label>
+                        <div className="flex items-center space-x-2">
+                            <input
+                                id="wake-word"
+                                type="text"
+                                value={wakeWord}
+                                onChange={(e) => setWakeWord(e.target.value)}
+                                disabled={!isConnected}
+                                className="flex-grow bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50"
+                                placeholder="e.g., Hey Garud"
+                            />
+                            <button
+                                onClick={handleSetWakeUpWord}
+                                disabled={!isConnected || !wakeWord.trim()}
+                                className="px-4 py-2 text-sm bg-cyan-600 hover:bg-cyan-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+                            >
+                                Save
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2 border-t border-gray-700 pt-4">
+                        <label className="block text-sm font-medium text-gray-300">Ollama Local AI Configuration</label>
+                        <div className="space-y-3">
+                            <div>
+                                <span className="text-xs text-gray-500 mb-1 block">Base URL</span>
+                                <input
+                                    type="text"
+                                    value={ollamaUrl}
+                                    onChange={(e) => setOllamaUrl(e.target.value)}
+                                    className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    placeholder="http://localhost:11434"
+                                />
+                            </div>
+                            <div>
+                                <span className="text-xs text-gray-500 mb-1 block">Model Name</span>
+                                <input
+                                    type="text"
+                                    value={ollamaModel}
+                                    onChange={(e) => setOllamaModel(e.target.value)}
+                                    className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    placeholder="e.g., llama3, mistral"
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

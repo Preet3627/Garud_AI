@@ -414,4 +414,33 @@ def get_distance():
         return -1 # Return an error value
 `,
   },
+  {
+    id: 15,
+    title: 'Garud AI & Pipecat Integration',
+    icon: MicIcon,
+    description: `Integrate the Pipecat voice framework for a complete voice robot solution. This setup provides VAD, ASR, LLM, and TTS with full-duplex dialogue. It uses a LangGraph Agent as a planner and executor to control the robot via its API.`,
+    code: `
+# --- Installation on Raspberry Pi ---
+# 1. Install uv: curl -LsSf https://astral.sh/uv/install.sh | sh
+# 2. Create project: uv init garud-voice-robot && cd garud-voice-robot
+# 3. Add dependencies:
+#    uv add pipecat-ai "pipecat-ai[whisper,ollama,piper]" python-dotenv requests
+
+# --- voice_agent.py (Simplified) ---
+import os
+import requests
+from pipecat.pipeline.pipeline import Pipeline
+from pipecat.services.openai import OpenAILLMService
+from pipecat.transports.services.helpers import DailyTransportHelper
+# ... other pipecat imports
+
+ROBOT_API_URL = "http://localhost:5001"
+
+def control_robot(command, text=None):
+    requests.post(f"{ROBOT_API_URL}/command", json={"command": command, "text": text})
+
+# Define the LangGraph Agent tools for robot control
+# ...
+`,
+  },
 ];
