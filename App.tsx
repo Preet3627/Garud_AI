@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { STEPS } from './constants';
 import { ROBOT_CODEBASE } from './codebase';
 import { StepCard } from './components/StepCard';
-import { LogoIcon, TerminalIcon, SettingsIcon, ScanIcon, RobotIcon, VisionIcon, SpeakerOnIcon, SpeakerOffIcon, ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, StopIcon, BeakerIcon, DownloadIcon, ShieldCheckIcon, VideoCameraIcon, AutopilotIcon, TrafficLightIcon, FollowIcon, FindBookIcon, ExploreIcon, BrainIcon as SparklesIcon, ChatBubbleLeftRightIcon, TrashIcon, PlayIcon, CogIcon, CameraIcon } from './components/Icons';
+import { LogoIcon, TerminalIcon, SettingsIcon, ScanIcon, RobotIcon, VisionIcon, SpeakerOnIcon, SpeakerOffIcon, ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, StopIcon, BeakerIcon, DownloadIcon, ShieldCheckIcon, VideoCameraIcon, AutopilotIcon, TrafficLightIcon, FollowIcon, FindBookIcon, ExploreIcon, BrainIcon as SparklesIcon, ChatBubbleLeftRightIcon, TrashIcon, PlayIcon, CogIcon, CameraIcon, MicIcon } from './components/Icons';
 import type { LogEntry, LogLevel, CustomResponse } from './types';
 
 declare const JSZip: any;
