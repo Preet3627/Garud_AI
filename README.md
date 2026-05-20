@@ -1,83 +1,106 @@
-# Garud AI Robot 🤖 (v0.1.0)
+# 🤖 Garud AI Robot (v0.1.1)
 
-A comprehensive control panel and intelligence suite for the Garud AI Robot (Raspbot V2). Now as a powerful cross-platform desktop application.
+[![Version](https://img.shields.io/badge/version-0.1.1-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases)
+[![Build Status](https://github.com/Preet3627/Garud_AI/actions/workflows/release.yml/badge.svg)](https://github.com/Preet3627/Garud_AI/actions)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue.svg)](https://github.com/Preet3627/Garud_AI)
+[![Framework](https://img.shields.io/badge/framework-Electron%20%2B%20React%20%2B%20Python-orange.svg)](https://github.com/Preet3627/Garud_AI)
+[![AI SDK](https://img.shields.io/badge/AI%20SDK-Pipecat%20%2B%20Vercel%20%2B%20Ollama-purple.svg)](https://github.com/Preet3627/Garud_AI)
+
+Garud AI is a state-of-the-art, multi-modal robot control system designed for the **Raspbot V2**. It combines a sleek Electron desktop interface with a high-performance Python backend to create a truly seamless human-robot interaction experience.
+
+---
+
+## 🌟 Project Vision
+
+The goal of Garud AI is to bridge the gap between complex robotics and intuitive AI. By integrating advanced voice processing, local LLMs, and real-time computer vision, Garud is not just a robot—it's an intelligent companion.
 
 ## 🚀 Key Features
 
-- **Desktop Experience**: Built with Electron for a native performance on macOS, Windows, and Linux.
-- **Pipecat Voice Integration**: Full-duplex voice interaction with VAD, ASR, LLM, and TTS.
-- **Local AI (Ollama)**: Directly configure and interact with local LLMs (like Llama3) via the UI.
-- **Vercel AI SDK**: Seamless streaming and chat capabilities integrated into the robot's intelligence.
-- **Advanced Computer Vision**: Live camera feed with object detection (YOLOv3-tiny) and scene description (Gemini).
-- **Multi-modal Control**: Manage movement via web API, IR remote, or autonomous autopilot modes.
+### 🖥️ Native Desktop Experience
+Built with **Electron**, the Garud AI dashboard provides a smooth, low-latency control center for your robot across macOS (Intel/Silicon), Windows, and Linux.
 
-## 📂 Project Structure
+### 🎙️ Advanced Voice Intelligence (Pipecat)
+- **Full-Duplex Dialogue**: Natural, two-way conversations without needing to wait for the robot to finish speaking.
+- **Voice Activity Detection (VAD)**: Smart listening that distinguishes between background noise and intentional commands.
+- **Interruption Support**: Stop the robot mid-sentence just by speaking to it.
 
-```text
-Garud_AI/
-├── .github/workflows/   <-- CI/CD for cross-platform releases
-├── core/                <-- Robot backend core logic (Python)
-├── components/          <-- React UI components
-├── electron-main.cjs    <-- Electron entry point
-├── voice_agent.py       <-- Pipecat voice interaction agent
-└── App.tsx              <-- Main dashboard and control logic
-```
+### 🧠 Local & Cloud AI Fusion
+- **Ollama Integration**: Run powerful models like Llama3 or Mistral locally on your machine and pipe their intelligence directly to the robot.
+- **Vercel AI SDK**: Provides a unified interface for both local and cloud-based AI providers.
+- **Gemini Vision**: High-level scene description and complex reasoning powered by Google's Gemini models.
+
+### 👁️ Real-time Computer Vision
+- **Object Detection**: Powered by YOLOv3-tiny for identifying people, cars, books, and more in real-time.
+- **Proactive Greeting**: The robot can recognize you and say "Namaste" automatically!
+- **Autopilot Modes**: Includes Obstacle Avoidance, Traffic Recognition, and Car Following.
+
+### ⚡ Seamless Automation (v0.1.1)
+- **Auto-Discovery**: Uses mDNS (Bonjour) to find your robot on the network instantly—no IP configuration required.
+- **Remote Deployment**: Push updates to your robot's Python code with a single click.
+- **SSH Control**: Start, stop, and monitor the robot's Python server directly from the desktop app.
+
+---
 
 ## 🛠️ Installation & Setup
 
-### For the Dashboard (Desktop App)
+### Dashboard (Desktop App)
 
-1. **Clone the repo**:
+1. **Clone & Install**:
    ```bash
-   git clone https://github.com/your-repo/Garud_AI.git
+   git clone https://github.com/Preet3627/Garud_AI.git
    cd Garud_AI
-   ```
-2. **Install Dependencies**:
-   ```bash
    npm install
    ```
-3. **Run in Development**:
+2. **Launch**:
    ```bash
    npm run electron:dev
    ```
-4. **Build Production Binaries**:
+3. **Build Installer**:
    ```bash
    npm run electron:build
    ```
 
-### For the Robot (Raspberry Pi)
+### Robot (Raspberry Pi)
 
-Follow the step-by-step guide integrated directly into the dashboard. It covers:
-- Driver installation for Raspbot V2.
-- Python environment setup.
-- YOLO model downloading.
-- Pipecat & Voice Agent configuration.
+Everything you need to set up your Pi is included in the **Setup Guide** directly within the app. It will guide you through:
+- Installing Yahboom drivers.
+- Setting up the Python 3.10+ environment.
+- Running the `main.py` Flask server.
 
-## 🤖 Local AI with Ollama
+---
 
-You can now connect Garud to your local Ollama instance directly from the **AI Settings** panel:
-1. Ensure Ollama is running (`ollama serve`).
-2. Enter your **Base URL** (default: `http://localhost:11434`).
-3. Specify the **Model Name** (e.g., `llama3`).
+## ⚠️ macOS Troubleshooting
 
-## ⚠️ macOS Troubleshooting (Damaged App Error)
-
-If you see an error saying the app is "damaged" or can't be opened because it's from an unidentified developer:
-1. Open your **Terminal**.
-2. Run the following command:
+If you encounter the "Damaged App" error due to the unsigned developer build:
+1. Move the app to `/Applications`.
+2. Run this in Terminal:
    ```bash
-   sudo xattr -rd com.apple.quarantine /Applications/Garud\ AI\ Robot.app
+   sudo xattr -rd com.apple.quarantine "/Applications/Garud AI Robot.app"
    ```
-3. Alternatively, **Right-click (Control-click)** the app and select **Open**.
 
-## 📦 Release v0.1.0 Notes
+---
 
-- Initial release of the Electron desktop application.
-- Integrated Pipecat framework for advanced voice capabilities.
-- Added Vercel AI SDK for unified AI interaction.
-- UI-based configuration for local Ollama models.
-- Cross-platform build automation via GitHub Actions.
+## 📂 Repository Structure
 
-## 📄 License
+- `core/`: Python source for robot hardware control and vision.
+- `utils/`: Utility functions for TTS and networking.
+- `components/`: React UI components for the dashboard.
+- `release-notes/`: Detailed history of every version update.
+- `electron-main.cjs`: The "brain" of the desktop application.
+- `voice_agent.py`: The Pipecat-powered voice interaction layer.
 
-MIT - See LICENSE for details.
+## 📦 Release History
+
+- [v0.1.1 - Auto-Pilot Update](./release-notes/v0.1.1.md)
+- [v0.1.0 - Initial Desktop Release](./release-notes/v0.1.0.md)
+
+---
+
+## 📄 License & Credits
+
+**License**: MIT
+**Hardware**: Yahboom Raspbot V2 (Raspberry Pi 4B recommended)
+**Developed by**: The Garud AI Team
+
+---
+*Built with speed, precision, and Dhurandhar energy.* 🏁

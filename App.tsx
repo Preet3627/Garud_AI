@@ -17,6 +17,40 @@ const App: React.FC = () => {
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [autopilotMode, setAutopilotMode] = useState<AutopilotMode>('off');
   const [isStreamLoading, setIsStreamLoading] = useState<boolean>(true);
+  const [sshConfig, setSshConfig] = useState({ username: 'pi', password: 'raspberry' });
+  const [isRobotRunning, setIsRobotServerRunning] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Listen for auto-discovered robots
+    if ((window as any).electronAPI) {
+      (window as any).electronAPI.onRobotDiscovered((ip: string) => {
+        addLog('System', 'info', `Auto-discovered robot at ${ip}`);
+        setRobotIp(ip);
+      });
+      (window as any).electronAPI.startDiscovery();
+    }
+  }, []);
+
+  const handleStartRemoteRobot = async () => {
+    if (!(window as any).electronAPI) return;
+    addLog('System', 'command', 'Attempting to start robot server remotely...');
+    const result = await (window as any).electronAPI.startRobotServer({ host: robotIp, ...sshConfig });
+    if (result.success) {
+      addLog('System', 'info', 'Robot server started successfully.');
+      setIsRobotServerRunning(true);
+    } else {
+      addLog('System', 'error', `Failed to start: ${result.error}`);
+    }
+  };
+
+  const handleStopRemoteRobot = async () => {
+    if (!(window as any).electronAPI) return;
+    const result = await (window as any).electronAPI.stopRobotServer({ host: robotIp, ...sshConfig });
+    if (result.success) {
+      addLog('System', 'info', 'Robot server stopped.');
+      setIsRobotServerRunning(false);
+    }
+  };
   
   const [customResponses, setCustomResponses] = useState<CustomResponse[]>([
     { id: 1, question: "Who are you?", answer: "I am Garud, an AI Robot." },
@@ -317,7 +351,55 @@ const App: React.FC = () => {
               </div>
             </div>
             
-             <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
+            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
+                <div className="flex items-center mb-4">
+                    <SettingsIcon className="h-5 w-5 mr-3 text-cyan-400" />
+                    <h3 className="text-lg font-semibold text-white">Robot Automation (SSH)</h3>
+                </div>
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <span className="text-xs text-gray-500 mb-1 block">Username</span>
+                            <input
+                                type="text"
+                                value={sshConfig.username}
+                                onChange={(e) => setSshConfig({ ...sshConfig, username: e.target.value })}
+                                className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none"
+                            />
+                        </div>
+                        <div>
+                            <span className="text-xs text-gray-500 mb-1 block">Password</span>
+                            <input
+                                type="password"
+                                value={sshConfig.password}
+                                onChange={(e) => setSshConfig({ ...sshConfig, password: e.target.value })}
+                                className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex space-x-3">
+                        <button
+                            onClick={handleStartRemoteRobot}
+                            className={`flex-1 py-2 rounded-md font-semibold text-sm transition-colors ${isRobotRunning ? 'bg-gray-700 text-gray-400' : 'bg-green-600 hover:bg-green-700 text-white'}`}
+                            disabled={isRobotRunning}
+                        >
+                            Start Server
+                        </button>
+                        <button
+                            onClick={handleStopRemoteRobot}
+                            className={`flex-1 py-2 rounded-md font-semibold text-sm transition-colors ${!isRobotRunning ? 'bg-gray-700 text-gray-400' : 'bg-red-600 hover:bg-red-700 text-white'}`}
+                            disabled={!isRobotRunning}
+                        >
+                            Stop Server
+                        </button>
+                    </div>
+                    <p className="text-[10px] text-gray-500 italic">
+                        * Uses mDNS to find 'garud-ai.local' automatically.
+                    </p>
+                </div>
+            </div>
+
+            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
                 <div className="flex items-center mb-4">
                     <MicIcon className="h-5 w-5 mr-3 text-cyan-400" />
                     <h3 className="text-lg font-semibold text-white">Voice Interaction (Pipecat)</h3>
