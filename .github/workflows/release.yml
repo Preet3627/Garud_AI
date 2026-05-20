@@ -1,35 +1,73 @@
-name: Release App
+name: Build and Release
 
 on:
+  push:
+    branches: [ main ]
   workflow_dispatch:
-
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    inputs:
+      version:
+        description: 'Release version (e.g., v0.1.3)'
+        required: false
+        default: ''
 
 jobs:
-  release:
-    runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
-
+  build-and-release:
     strategy:
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Check out Git repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Build and Release
+      - name: Create release (if missing)
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=""
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="v$(node -p "require('./package.json').version")"
+          fi
+
+          # Create draft release if it doesn't exist, or get existing one
+          gh release view "$VERSION" --json id 2>/dev/null || \
+            gh release create "$VERSION" \
+              --title "$VERSION" \
+              --notes-file "release-notes/$(echo $VERSION | sed 's/^v//').md" \
+              --draft \
+              --generate-notes
+        shell: bash
+
+      - name: Build and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: npm run electron:build -- -p always
+        shell: bash
+
+      - name: Upload remaining assets (force overwrite)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="v$(node -p "require('./package.json').version")"
+
+          # Delete and re-upload each asset to handle existing releases
+          for file in release/*.dmg release/*.zip release/*.blockmap release/latest-mac.yml release/latest.yml release/latest-linux.yml; do
+            [ -f "$file" ] || continue
+            filename=$(basename "$file")
+            gh release delete-asset "$VERSION" "$filename" 2>/dev/null || true
+            gh release upload "$VERSION" "$file" --clobber
+          done
+        shell: bash
+        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
