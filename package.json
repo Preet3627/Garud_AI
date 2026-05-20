@@ -2,7 +2,7 @@
   "name": "garud-ai-robot",
   "private": true,
   "description": "Desktop control panel for Garud AI Robot with Pipecat and Ollama integration.",
-  "author": "Garud AI Team <support@garud.ai>",
+  "author": "Garud AI Team <preetjgfilj2@gmail.com>",
   "version": "0.1.0",
   "type": "module",
   "main": "electron-main.cjs",
