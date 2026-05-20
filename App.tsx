@@ -1,27 +1,56 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Bot, 
+  Terminal, 
+  Settings, 
+  Zap, 
+  Camera, 
+  Mic, 
+  Cpu, 
+  Shield, 
+  Compass, 
+  MessageSquare, 
+  Play, 
+  Trash2, 
+  RefreshCw, 
+  Wifi, 
+  WifiOff, 
+  Activity, 
+  ChevronRight,
+  Database,
+  LayoutDashboard,
+  FileCode,
+  Box
+} from 'lucide-react';
 import { STEPS } from './constants';
 import { ROBOT_CODEBASE } from './codebase';
 import { StepCard } from './components/StepCard';
-import { LogoIcon, TerminalIcon, SettingsIcon, ScanIcon, RobotIcon, VisionIcon, SpeakerOnIcon, SpeakerOffIcon, ArrowUpIcon, ArrowDownIcon, ArrowLeftIcon, ArrowRightIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon, StopIcon, BeakerIcon, DownloadIcon, ShieldCheckIcon, VideoCameraIcon, AutopilotIcon, TrafficLightIcon, FollowIcon, FindBookIcon, ExploreIcon, BrainIcon as SparklesIcon, ChatBubbleLeftRightIcon, TrashIcon, PlayIcon, CogIcon, CameraIcon, MicIcon } from './components/Icons';
 import type { LogEntry, LogLevel, CustomResponse } from './types';
 
 declare const JSZip: any;
 
 type AutopilotMode = 'off' | 'avoid' | 'traffic' | 'follow' | 'explore';
+type Tab = 'dashboard' | 'vision' | 'intelligence' | 'setup';
 
 const App: React.FC = () => {
-  const [robotIp, setRobotIp] = useState<string>('192.168.1.10'); // Default IP
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [robotIp, setRobotIp] = useState<string>('192.168.1.10');
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isMuted, setIsMuted] = useState<boolean>(false);
   const [autopilotMode, setAutopilotMode] = useState<AutopilotMode>('off');
-  const [isStreamLoading, setIsStreamLoading] = useState<boolean>(true);
   const [sshConfig, setSshConfig] = useState({ username: 'pi', password: 'raspberry' });
   const [isRobotRunning, setIsRobotServerRunning] = useState<boolean>(false);
+  
+  const [ollamaUrl, setOllamaUrl] = useState<string>('http://localhost:11434');
+  const [ollamaModel, setOllamaModel] = useState<string>('llama3');
+  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
+  const [isFetchingModels, setIsFetchingModels] = useState<boolean>(false);
+
+  const logsEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Listen for auto-discovered robots
     if ((window as any).electronAPI) {
       (window as any).electronAPI.onRobotDiscovered((ip: string) => {
         addLog('System', 'info', `Auto-discovered robot at ${ip}`);
@@ -29,45 +58,8 @@ const App: React.FC = () => {
       });
       (window as any).electronAPI.startDiscovery();
     }
-  }, []);
-
-  const handleStartRemoteRobot = async () => {
-    if (!(window as any).electronAPI) return;
-    addLog('System', 'command', 'Attempting to start robot server remotely...');
-    const result = await (window as any).electronAPI.startRobotServer({ host: robotIp, ...sshConfig });
-    if (result.success) {
-      addLog('System', 'info', 'Robot server started successfully.');
-      setIsRobotServerRunning(true);
-    } else {
-      addLog('System', 'error', `Failed to start: ${result.error}`);
-    }
-  };
-
-  const handleStopRemoteRobot = async () => {
-    if (!(window as any).electronAPI) return;
-    const result = await (window as any).electronAPI.stopRobotServer({ host: robotIp, ...sshConfig });
-    if (result.success) {
-      addLog('System', 'info', 'Robot server stopped.');
-      setIsRobotServerRunning(false);
-    }
-  };
-  
-  const [customResponses, setCustomResponses] = useState<CustomResponse[]>([
-    { id: 1, question: "Who are you?", answer: "I am Garud, an AI Robot." },
-    { id: 2, question: "What can you do?", answer: "I can see, move, talk, and learn new things!" }
-  ]);
-  const [newQuestion, setNewQuestion] = useState<string>('');
-  const [newAnswer, setNewAnswer] = useState<string>('');
-  
-  const [wakeWord, setWakeWord] = useState<string>('hey garud');
-  const [ollamaUrl, setOllamaUrl] = useState<string>('http://localhost:11434');
-  const [ollamaModel, setOllamaModel] = useState<string>('llama3');
-  const [ollamaModels, setOllamaModels] = useState<string[]>([]);
-  const [isFetchingModels, setIsFetchingModels] = useState<boolean>(false);
-
-  useEffect(() => {
     fetchOllamaModels();
-  }, [ollamaUrl]);
+  }, []);
 
   const fetchOllamaModels = async () => {
     if (!ollamaUrl) return;
@@ -78,518 +70,289 @@ const App: React.FC = () => {
         const data = await response.json();
         const models = data.models.map((m: any) => m.name);
         setOllamaModels(models);
-        if (models.length > 0 && !models.includes(ollamaModel)) {
-          setOllamaModel(models[0]);
-        }
+        if (models.length > 0 && !models.includes(ollamaModel)) setOllamaModel(models[0]);
       }
-    } catch (error) {
-      console.error("Failed to fetch Ollama models:", error);
+    } catch (e) {
       setOllamaModels([]);
     } finally {
       setIsFetchingModels(false);
     }
   };
 
-  const logsEndRef = useRef<HTMLDivElement>(null);
-  const connectSoundRef = useRef<HTMLAudioElement | null>(null);
-  const disconnectSoundRef = useRef<HTMLAudioElement | null>(null);
-  const messageSoundRef = useRef<HTMLAudioElement | null>(null);
-
-  useEffect(() => {
-    connectSoundRef.current = new Audio('https://uploads.static.prod.pro.coinbase.com/assets/sounds/send_01.mp3');
-    disconnectSoundRef.current = new Audio('https://uploads.static.prod.pro.coinbase.com/assets/sounds/cancel_01.mp3');
-    messageSoundRef.current = new Audio('https://uploads.static.prod.pro.coinbase.com/assets/sounds/receive_01.mp3');
-  }, []);
-
-  const playSound = (sound: 'connect' | 'disconnect' | 'message') => {
-    if (isMuted) return;
-    const audioMap = {
-      connect: connectSoundRef.current,
-      disconnect: disconnectSoundRef.current,
-      message: messageSoundRef.current,
-    };
-    const audio = audioMap[sound];
-    if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(error => console.error(`Audio play failed for ${sound}:`, error));
-    }
-  };
-  
-  useEffect(() => {
-    logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [logs]);
-
   const addLog = (source: 'System' | 'Robot', level: LogLevel, message: string) => {
-    const newLog: LogEntry = { timestamp: new Date().toLocaleTimeString(), source, level, message };
-    if (source === 'Robot') playSound('message');
-    setLogs(prevLogs => [...prevLogs, newLog]);
+    setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), source, level, message }].slice(-100));
   };
-  
-  const sendRobotRequest = async (endpoint: string, method: string, body: object | null, systemLog: string) => {
-    if (!isConnected) {
-        addLog('System', 'error', 'Not connected to the robot.');
-        return;
-    }
-    addLog('System', 'command', systemLog);
+
+  const sendRobotRequest = async (endpoint: string, method: string, body: object | null) => {
+    if (!isConnected) return addLog('System', 'error', 'Not connected to robot.');
     try {
-        const response = await fetch(`http://${robotIp}:5001${endpoint}`, {
-            method: method,
-            headers: { 'Content-Type': 'application/json' },
-            body: body ? JSON.stringify(body) : null,
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (data.message) {
-            addLog('Robot', 'response', data.message);
-        }
-        return data;
+      const response = await fetch(`http://${robotIp}:5001${endpoint}`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: body ? JSON.stringify(body) : null,
+      });
+      const data = await response.json();
+      if (data.message) addLog('Robot', 'response', data.message);
+      return data;
     } catch (error) {
-        console.error("API request failed:", error);
-        addLog('System', 'error', `Request failed. Is the robot server running at ${robotIp}?`);
+      addLog('System', 'error', `API failed at ${robotIp}`);
     }
-  };
-
-  const handleCommand = (command: string, text?: string) => {
-      sendRobotRequest('/command', 'POST', { command, text }, `Sending command: ${command}`);
-  };
-
-  const handleSetWakeUpWord = () => {
-    if (!wakeWord.trim()) {
-      addLog('System', 'error', 'Wake word cannot be empty.');
-      return;
-    }
-    sendRobotRequest('/set-wake-word', 'POST', { wake_word: wakeWord }, `Setting wake word to "${wakeWord}"...`);
-  };
-
-  const handleAddResponse = () => {
-    if (!newQuestion.trim() || !newAnswer.trim()) {
-      addLog('System', 'error', 'Question and Answer cannot be empty.');
-      return;
-    }
-    const newResponse: CustomResponse = { id: Date.now(), question: newQuestion, answer: newAnswer };
-    setCustomResponses([...customResponses, newResponse]);
-    setNewQuestion('');
-    setNewAnswer('');
-    addLog('System', 'info', `Custom response for "${newQuestion}" added. Save to robot to apply.`);
-  };
-
-  const handleDeleteResponse = (id: number) => {
-    setCustomResponses(customResponses.filter(r => r.id !== id));
-    addLog('System', 'info', 'Custom response removed.');
-  };
-  
-  const handleSaveResponsesToRobot = () => {
-    sendRobotRequest('/custom-responses', 'POST', { responses: customResponses }, 'Saving all custom responses to robot...');
-  };
-  
-  const handleTestResponse = (question: string, answer: string) => {
-    addLog('System', 'command', `Testing custom response for: "${question}"`);
-    // This is a special command to make the robot speak the answer
-    sendRobotRequest('/command', 'POST', { command: 'test_custom_response', text: question }, `Asking robot: "${question}"`);
-  };
-
-  const handleToggleAutopilot = async (mode: AutopilotMode) => {
-    const nextMode = autopilotMode === mode ? 'off' : mode;
-    const data = await sendRobotRequest('/autopilot', 'POST', { mode: nextMode }, `Setting autopilot to ${nextMode}...`);
-    if (data && data.status === 'success') {
-      setAutopilotMode(nextMode);
-    }
-  };
-
-  const handleDownloadCode = () => {
-    const zip = new JSZip();
-    const rootFolder = zip.folder("garud_ai_robot");
-
-    if (rootFolder) {
-      for (const [filePath, content] of Object.entries(ROBOT_CODEBASE)) {
-        rootFolder.file(filePath, content);
-      }
-    }
-    
-    zip.generateAsync({ type: "blob" }).then(content => {
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(content);
-      link.download = "garud_ai_robot.zip";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-    addLog('System', 'info', 'Robot backend code ZIP file downloaded.');
   };
 
   const handleConnect = () => {
     if (isConnected) {
       setIsConnected(false);
-      setAutopilotMode('off');
-      playSound('disconnect');
-      addLog('System', 'info', `Disconnected from robot at ${robotIp}.`);
-    } else if (!isConnecting) {
+      addLog('System', 'info', 'Disconnected.');
+    } else {
       setIsConnecting(true);
-      addLog('System', 'info', `Connecting to robot at ${robotIp}...`);
-      // Simulate connection delay
       setTimeout(() => {
         setIsConnected(true);
-        setIsStreamLoading(true);
-        playSound('connect');
-        addLog('System', 'info', 'Successfully connected to Garud AI Robot.');
-        addLog('Robot', 'response', 'Hello! I am Garud. How can I help you today?');
         setIsConnecting(false);
-      }, 1500);
+        addLog('System', 'info', `Connected to ${robotIp}`);
+      }, 1000);
     }
   };
 
-  const cameraUrl = isConnected ? `http://${robotIp}:5001/video_feed` : '';
+  const SidebarItem = ({ id, icon: Icon, label }: { id: Tab, icon: any, label: string }) => (
+    <button
+      onClick={() => setActiveTab(id)}
+      className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+        activeTab === id 
+          ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.2)]' 
+          : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+      }`}
+    >
+      <Icon size={20} className={activeTab === id ? 'animate-pulse' : ''} />
+      <span className="font-medium text-sm">{label}</span>
+    </button>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
-      <main className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <header className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-3">
-            <LogoIcon className="h-10 w-10 text-cyan-400" />
-            <div>
-              <h1 className="text-2xl font-bold text-white animate-rgb-text-glow">Garud AI Robot</h1>
-              <p className="text-sm text-gray-400">Control Panel & Setup Guide</p>
-            </div>
+    <div className="flex h-screen w-screen bg-[#020617]/80 backdrop-blur-2xl text-gray-100 font-sans selection:bg-cyan-500/30">
+      {/* Sidebar */}
+      <aside className="w-64 border-r border-white/10 flex flex-col p-6 space-y-8 bg-black/20">
+        <div className="flex items-center space-x-3 px-2">
+          <div className="p-2 bg-cyan-500 rounded-lg shadow-[0_0_20px_rgba(6,182,212,0.5)]">
+            <Bot size={24} className="text-white" />
           </div>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleDownloadCode}
-              className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
-              aria-label="Download robot code"
-            >
-              <DownloadIcon className="h-6 w-6" />
-            </button>
-            <button
-              onClick={() => setIsMuted(!isMuted)}
-              className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700/50 transition-colors"
-              aria-label={isMuted ? "Unmute sounds" : "Mute sounds"}
-            >
-              {isMuted ? <SpeakerOffIcon className="h-6 w-6" /> : <SpeakerOnIcon className="h-6 w-6" />}
-            </button>
-          </div>
-        </header>
+          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">
+            Garud AI
+          </h1>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-white mb-4">Setup Guide</h2>
-            {STEPS.map((step, index) => (
-              <StepCard key={step.id} step={step} index={index} />
-            ))}
-          </div>
+        <nav className="flex-1 space-y-2">
+          <SidebarItem id="dashboard" icon={LayoutDashboard} label="Dashboard" />
+          <SidebarItem id="vision" icon={Camera} label="Vision Lab" />
+          <SidebarItem id="intelligence" icon={Cpu} label="AI Brain" />
+          <SidebarItem id="setup" icon={FileCode} label="Deployment" />
+        </nav>
 
-          <div className="sticky top-8 self-start space-y-6">
-            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
-              <h2 className="text-xl font-semibold text-white mb-4">Control Panel</h2>
-              <div className="flex items-center space-x-4">
-                <input
-                  type="text"
-                  value={robotIp}
-                  onChange={(e) => setRobotIp(e.target.value)}
-                  disabled={isConnected || isConnecting}
-                  className="flex-grow bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50"
-                  placeholder="Enter Robot IP Address"
-                  aria-label="Robot IP Address"
-                />
-                <button
-                  onClick={handleConnect}
-                  disabled={isConnecting}
-                  className={`px-6 py-2 rounded-md font-semibold transition-colors w-32 ${
-                    isConnected ? 'bg-red-600 hover:bg-red-700' : 'bg-cyan-600 hover:bg-cyan-700'
-                  } text-white disabled:opacity-50 disabled:cursor-wait`}
-                >
-                  {isConnected ? 'Disconnect' : isConnecting ? 'Connecting...' : 'Connect'}
-                </button>
-              </div>
-               <p className={`text-sm mt-2 ${isConnected ? 'text-green-400' : 'text-gray-400'}`}>
-                Status: {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Disconnected'}
-              </p>
-            </div>
-            
-            {isConnected && (
-              <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg backdrop-blur-sm">
-                <div className="flex items-center p-4 border-b border-gray-700/50">
-                  <VideoCameraIcon className="h-5 w-5 mr-3 text-cyan-400" />
-                  <h3 className="text-lg font-semibold text-white">Live Camera Feed</h3>
-                </div>
-                <div className="p-4 bg-black/20 aspect-video flex items-center justify-center">
-                  {isStreamLoading && <span className="text-gray-400">Loading stream...</span>}
-                  <img
-                    src={cameraUrl}
-                    alt="Robot camera feed"
-                    className={`w-full h-full object-cover ${isStreamLoading ? 'hidden' : 'block'}`}
-                    onLoad={() => setIsStreamLoading(false)}
-                    onError={() => setIsStreamLoading(true)}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg backdrop-blur-sm">
-              <div className="flex items-center p-4 border-b border-gray-700/50">
-                <TerminalIcon className="h-5 w-5 mr-3 text-cyan-400" />
-                <h3 className="text-lg font-semibold text-white">Live Action Log</h3>
-              </div>
-              <div className="h-64 overflow-y-auto p-4 bg-black/20">
-                {logs.length === 0 ? (
-                  <div className="flex items-center justify-center h-full text-gray-500">
-                    <span>Logs will appear here...</span>
-                  </div>
-                ) : (
-                  <div className="space-y-2 text-sm font-mono">
-                    {logs.map((log, index) => (
-                      <div key={index} className="flex">
-                        <span className="text-gray-500 mr-2">{log.timestamp}</span>
-                        <span className={`mr-2 font-bold ${log.source === 'Robot' ? 'text-cyan-400' : 'text-purple-400'}`}>{log.source}:</span>
-                        <span className="flex-1 whitespace-pre-wrap">{log.message}</span>
-                      </div>
-                    ))}
-                    <div ref={logsEndRef} />
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
-                <div className="flex items-center mb-4">
-                    <SettingsIcon className="h-5 w-5 mr-3 text-cyan-400" />
-                    <h3 className="text-lg font-semibold text-white">Robot Automation (SSH)</h3>
-                </div>
-                <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <span className="text-xs text-gray-500 mb-1 block">Username</span>
-                            <input
-                                type="text"
-                                value={sshConfig.username}
-                                onChange={(e) => setSshConfig({ ...sshConfig, username: e.target.value })}
-                                className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none"
-                            />
-                        </div>
-                        <div>
-                            <span className="text-xs text-gray-500 mb-1 block">Password</span>
-                            <input
-                                type="password"
-                                value={sshConfig.password}
-                                onChange={(e) => setSshConfig({ ...sshConfig, password: e.target.value })}
-                                className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none"
-                            />
-                        </div>
-                    </div>
-                    <div className="flex space-x-3">
-                        <button
-                            onClick={handleStartRemoteRobot}
-                            className={`flex-1 py-2 rounded-md font-semibold text-sm transition-colors ${isRobotRunning ? 'bg-gray-700 text-gray-400' : 'bg-green-600 hover:bg-green-700 text-white'}`}
-                            disabled={isRobotRunning}
-                        >
-                            Start Server
-                        </button>
-                        <button
-                            onClick={handleStopRemoteRobot}
-                            className={`flex-1 py-2 rounded-md font-semibold text-sm transition-colors ${!isRobotRunning ? 'bg-gray-700 text-gray-400' : 'bg-red-600 hover:bg-red-700 text-white'}`}
-                            disabled={!isRobotRunning}
-                        >
-                            Stop Server
-                        </button>
-                    </div>
-                    <p className="text-[10px] text-gray-500 italic">
-                        * Uses mDNS to find 'garud-ai.local' automatically.
-                    </p>
-                </div>
-            </div>
-
-            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
-                <div className="flex items-center mb-4">
-                    <MicIcon className="h-5 w-5 mr-3 text-cyan-400" />
-                    <h3 className="text-lg font-semibold text-white">Voice Interaction (Pipecat)</h3>
-                </div>
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between p-3 bg-gray-900/50 rounded-md border border-gray-700">
-                        <span className="text-sm text-gray-300">Voice Agent Status</span>
-                        <span className={`flex items-center text-xs font-bold px-2 py-1 rounded-full ${isConnected ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                            <span className={`h-2 w-2 rounded-full mr-2 ${isConnected ? 'bg-green-400 animate-pulse' : 'bg-red-400'}`} />
-                            {isConnected ? 'READY' : 'OFFLINE'}
-                        </span>
-                    </div>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                        Full-duplex voice interaction is powered by Pipecat and LangGraph. 
-                        The robot can now "Think" before acting on your voice commands.
-                    </p>
-                </div>
-            </div>
-
-            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
-                <div className="flex items-center mb-4">
-                    <CogIcon className="h-5 w-5 mr-3 text-cyan-400" />
-                    <h3 className="text-lg font-semibold text-white">AI Settings</h3>
-                </div>
-                <div className="space-y-4">
-                    <div className="space-y-2">
-                        <label htmlFor="wake-word" className="block text-sm font-medium text-gray-300">Custom Voice Wake Word</label>
-                        <div className="flex items-center space-x-2">
-                            <input
-                                id="wake-word"
-                                type="text"
-                                value={wakeWord}
-                                onChange={(e) => setWakeWord(e.target.value)}
-                                disabled={!isConnected}
-                                className="flex-grow bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:opacity-50"
-                                placeholder="e.g., Hey Garud"
-                            />
-                            <button
-                                onClick={handleSetWakeUpWord}
-                                disabled={!isConnected || !wakeWord.trim()}
-                                className="px-4 py-2 text-sm bg-cyan-600 hover:bg-cyan-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
-                            >
-                                Save
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="space-y-2 border-t border-gray-700 pt-4">
-                        <label className="block text-sm font-medium text-gray-300">Ollama Local AI Configuration</label>
-                        <div className="space-y-3">
-                            <div>
-                                <span className="text-xs text-gray-500 mb-1 block">Base URL</span>
-                                <input
-                                    type="text"
-                                    value={ollamaUrl}
-                                    onChange={(e) => setOllamaUrl(e.target.value)}
-                                    className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                                    placeholder="http://localhost:11434"
-                                />
-                            </div>
-                            <div>
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="text-xs text-gray-500 block">Model Name</span>
-                                    <button 
-                                        onClick={fetchOllamaModels}
-                                        className="text-[10px] text-cyan-400 hover:text-cyan-300 transition-colors uppercase font-bold"
-                                        disabled={isFetchingModels}
-                                    >
-                                        {isFetchingModels ? 'Fetching...' : 'Refresh List'}
-                                    </button>
-                                </div>
-                                {ollamaModels.length > 0 ? (
-                                    <select
-                                        value={ollamaModel}
-                                        onChange={(e) => setOllamaModel(e.target.value)}
-                                        className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                                    >
-                                        {ollamaModels.map((model) => (
-                                            <option key={model} value={model}>{model}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <input
-                                        type="text"
-                                        value={ollamaModel}
-                                        onChange={(e) => setOllamaModel(e.target.value)}
-                                        className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                                        placeholder="e.g., llama3, mistral"
-                                    />
-                                )}
-                                {ollamaModels.length === 0 && !isFetchingModels && (
-                                    <p className="text-[10px] text-red-400 mt-1">No local models found. Is Ollama running?</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
-               <div className="flex items-center mb-4">
-                 <AutopilotIcon className="h-5 w-5 mr-3 text-cyan-400" />
-                 <h3 className="text-lg font-semibold text-white">Autopilot Systems</h3>
-               </div>
-               <div className="grid grid-cols-2 gap-4">
-                 <button onClick={() => handleToggleAutopilot('avoid')} disabled={!isConnected} className={`flex items-center justify-center p-3 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${autopilotMode === 'avoid' ? 'bg-cyan-600' : 'bg-gray-700 hover:bg-gray-600'}`}>
-                   <ShieldCheckIcon className="h-5 w-5 mr-2" />
-                   Avoidance
-                 </button>
-                 <button onClick={() => handleToggleAutopilot('traffic')} disabled={!isConnected} className={`flex items-center justify-center p-3 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${autopilotMode === 'traffic' ? 'bg-cyan-600' : 'bg-gray-700 hover:bg-gray-600'}`}>
-                   <TrafficLightIcon className="h-5 w-5 mr-2" />
-                   Traffic Mode
-                 </button>
-                 <button onClick={() => handleToggleAutopilot('follow')} disabled={!isConnected} className={`flex items-center justify-center p-3 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${autopilotMode === 'follow' ? 'bg-cyan-600' : 'bg-gray-700 hover:bg-gray-600'}`}>
-                   <FollowIcon className="h-5 w-5 mr-2" />
-                   Follow Car
-                 </button>
-                  <button onClick={() => handleToggleAutopilot('explore')} disabled={!isConnected} className={`flex items-center justify-center p-3 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${autopilotMode === 'explore' ? 'bg-cyan-600' : 'bg-gray-700 hover:bg-gray-600'}`}>
-                   <ExploreIcon className="h-5 w-5 mr-2" />
-                   Explore
-                 </button>
-               </div>
-            </div>
-
-            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
-              <h3 className="text-lg font-semibold text-white mb-4">Movement & Sensors</h3>
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-                <div className="col-span-3 sm:col-span-3 grid grid-cols-3 gap-2">
-                   <button onClick={() => handleCommand('rotate_left')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" aria-label="Rotate Left"><ArrowUturnLeftIcon className="h-6 w-6" /></button>
-                  <button onClick={() => handleCommand('move_forward')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" aria-label="Move Forward"><ArrowUpIcon className="h-6 w-6" /></button>
-                  <button onClick={() => handleCommand('rotate_right')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" aria-label="Rotate Right"><ArrowUturnRightIcon className="h-6 w-6" /></button>
-                  <button onClick={() => handleCommand('strafe_left')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" aria-label="Strafe Left"><ArrowLeftIcon className="h-6 w-6" /></button>
-                  <button onClick={() => handleCommand('stop')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-red-600/80 rounded-md hover:bg-red-500/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" aria-label="Stop"><StopIcon className="h-6 w-6" /></button>
-                  <button onClick={() => handleCommand('strafe_right')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" aria-label="Strafe Right"><ArrowRightIcon className="h-6 w-6" /></button>
-                  <div/><button onClick={() => handleCommand('move_backward')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" aria-label="Move Backward"><ArrowDownIcon className="h-6 w-6" /></button><div/>
-                </div>
-                <div className="col-span-3 sm:col-span-1 flex flex-col gap-4">
-                   <button onClick={() => handleCommand('measure_distance')} disabled={!isConnected} className="flex items-center text-center justify-center w-full h-full p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
-                     <BeakerIcon className="h-5 w-5 mr-2" />Measure Distance</button>
-                </div>
-              </div>
-            </div>
-
-             <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
-              <h3 className="text-lg font-semibold text-white mb-4">AI Actions</h3>
-              <div className="grid grid-cols-2 gap-4">
-                 <button onClick={() => handleCommand('describe_scene')} disabled={!isConnected} className="col-span-2 flex items-center justify-center p-3 bg-gray-700/50 rounded-md hover:bg-gray-600/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors animate-rgb-border-glow font-semibold text-lg">
-                    <CameraIcon className="h-6 w-6 mr-3" />See & Describe Scene
-                 </button>
-                 <button onClick={() => handleCommand('wake_word')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><SparklesIcon className="h-5 w-5 mr-2" />Test Wake Effect</button>
-                 <button onClick={() => handleCommand('introduce_gujarati')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><RobotIcon className="h-5 w-5 mr-2" />Introduce (Gujarati)</button>
-                 <button onClick={() => handleCommand('find_book')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><FindBookIcon className="h-5 w-5 mr-2" />Find a Book</button>
-                <button onClick={() => handleCommand('scan_question')} disabled={!isConnected} className="flex items-center justify-center p-3 bg-gray-700 rounded-md hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"><ScanIcon className="h-5 w-5 mr-2" />Scan Question</button>
-              </div>
-            </div>
-
-            <div className="bg-gray-800/40 border border-gray-700/50 rounded-lg shadow-lg p-6 backdrop-blur-sm">
-               <div className="flex items-center justify-between mb-4">
-                 <div className="flex items-center">
-                   <ChatBubbleLeftRightIcon className="h-5 w-5 mr-3 text-cyan-400" />
-                   <h3 className="text-lg font-semibold text-white">Custom AI Responses</h3>
-                 </div>
-                 <button onClick={handleSaveResponsesToRobot} disabled={!isConnected || customResponses.length === 0} className="px-4 py-1 text-sm bg-cyan-600 hover:bg-cyan-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Save to Robot</button>
-               </div>
-               <div className="space-y-4">
-                 <div className="space-y-2">
-                   <input type="text" value={newQuestion} onChange={(e) => setNewQuestion(e.target.value)} placeholder="When user says..." className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"/>
-                   <textarea value={newAnswer} onChange={(e) => setNewAnswer(e.target.value)} placeholder="Robot will answer..." rows={2} className="w-full bg-gray-900 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500"/>
-                 </div>
-                 <button onClick={handleAddResponse} className="w-full p-2 bg-gray-700 hover:bg-gray-600 rounded-md font-semibold transition-colors">Add Response</button>
-               </div>
-               <div className="mt-6 space-y-3 max-h-60 overflow-y-auto pr-2">
-                 {customResponses.map((res) => (
-                   <div key={res.id} className="bg-gray-900/50 p-3 rounded-md border border-gray-700 flex justify-between items-center">
-                     <div className="flex-1">
-                       <p className="text-sm font-semibold text-purple-300">{res.question}</p>
-                       <p className="text-sm text-cyan-300 mt-1">{res.answer}</p>
-                     </div>
-                     <div className="flex items-center space-x-2 ml-4">
-                       <button onClick={() => handleTestResponse(res.question, res.answer)} disabled={!isConnected} className="p-2 text-gray-400 hover:text-white disabled:opacity-50 transition-colors" aria-label="Test Response"><PlayIcon className="h-5 w-5"/></button>
-                       <button onClick={() => handleDeleteResponse(res.id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors" aria-label="Delete Response"><TrashIcon className="h-5 w-5"/></button>
-                     </div>
-                   </div>
-                 ))}
-               </div>
-            </div>
-
+        <div className="pt-6 border-t border-white/10">
+          <div className="p-4 rounded-2xl bg-white/5 border border-white/5 space-y-3">
+             <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500 uppercase font-bold tracking-wider">Status</span>
+                <div className={`h-2 w-2 rounded-full ${isConnected ? 'bg-green-400 animate-ping' : 'bg-red-500'}`} />
+             </div>
+             <p className="text-xs font-mono text-gray-400 truncate">{robotIp}</p>
+             <button 
+                onClick={handleConnect}
+                className={`w-full py-2 rounded-lg text-xs font-bold transition-all ${
+                  isConnected ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-cyan-500 text-white hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]'
+                }`}
+             >
+                {isConnecting ? '...' : isConnected ? 'Disconnect' : 'Connect Robot'}
+             </button>
           </div>
         </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-hidden relative flex flex-col">
+        <header className="h-16 border-b border-white/10 flex items-center justify-between px-8 bg-black/10 backdrop-blur-md">
+           <div className="flex items-center space-x-2 text-sm text-gray-400">
+              <span className="capitalize">{activeTab}</span>
+              <ChevronRight size={14} />
+              <span className="text-gray-200 font-medium">Garud-v0.1.1</span>
+           </div>
+           <div className="flex items-center space-x-4">
+              <Activity size={18} className="text-cyan-500" />
+              <div className="h-4 w-px bg-white/10" />
+              <div className="text-xs font-mono text-cyan-400">FPS: 30</div>
+           </div>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+              className="max-w-6xl mx-auto space-y-8"
+            >
+              {activeTab === 'dashboard' && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Robot Automation */}
+                  <div className="lg:col-span-2 space-y-6">
+                    <section className="p-6 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-xl">
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center space-x-3">
+                          <Zap className="text-cyan-400" />
+                          <h2 className="text-lg font-semibold">Robot Automation</h2>
+                        </div>
+                        <div className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 text-[10px] font-bold uppercase tracking-widest">SSH Ready</div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <input 
+                          value={sshConfig.username}
+                          onChange={e => setSshConfig({...sshConfig, username: e.target.value})}
+                          className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm focus:border-cyan-500/50 transition-all outline-none" 
+                          placeholder="User (pi)"
+                        />
+                        <input 
+                          type="password"
+                          value={sshConfig.password}
+                          onChange={e => setSshConfig({...sshConfig, password: e.target.value})}
+                          className="bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-sm focus:border-cyan-500/50 transition-all outline-none" 
+                          placeholder="Pass"
+                        />
+                      </div>
+                      <div className="flex space-x-3">
+                        <button className="flex-1 bg-white text-black font-bold py-3 rounded-xl hover:bg-cyan-400 transition-all flex items-center justify-center space-x-2">
+                          <Play size={18} fill="currentColor" />
+                          <span>Bootstrap System</span>
+                        </button>
+                        <button className="px-6 border border-white/10 rounded-xl hover:bg-white/5 transition-all">
+                          <RefreshCw size={18} className="text-gray-400" />
+                        </button>
+                      </div>
+                    </section>
+
+                    {/* Quick Logs */}
+                    <section className="p-6 rounded-3xl bg-black/40 border border-white/10 h-64 flex flex-col">
+                       <div className="flex items-center space-x-2 mb-4 text-gray-400">
+                          <Terminal size={16} />
+                          <span className="text-xs font-bold uppercase tracking-wider">Live System Stream</span>
+                       </div>
+                       <div className="flex-1 font-mono text-[11px] overflow-y-auto space-y-1 text-gray-500">
+                          {logs.map((log, i) => (
+                            <div key={i} className="flex space-x-3">
+                              <span className="text-cyan-900">[{log.timestamp}]</span>
+                              <span className={log.level === 'error' ? 'text-red-400' : 'text-cyan-500/70'}>{log.message}</span>
+                            </div>
+                          ))}
+                       </div>
+                    </section>
+                  </div>
+
+                  {/* Sidebar Stats */}
+                  <div className="space-y-6">
+                    <div className="p-6 rounded-3xl bg-gradient-to-br from-cyan-600 to-blue-700 text-white shadow-lg shadow-cyan-500/20">
+                       <Shield size={32} className="mb-4 opacity-80" />
+                       <h3 className="text-xl font-bold mb-1">Safety Guard</h3>
+                       <p className="text-sm opacity-80 leading-relaxed">Automatic obstacle avoidance and cliff detection are currently active.</p>
+                    </div>
+                    
+                    <div className="p-6 rounded-3xl bg-white/5 border border-white/10">
+                       <div className="flex items-center space-x-3 mb-4">
+                          <Database className="text-purple-400" size={20} />
+                          <h3 className="font-semibold">Local Brain</h3>
+                       </div>
+                       <div className="space-y-4">
+                          <div className="text-xs text-gray-500">Active Model: <span className="text-purple-300">{ollamaModel}</span></div>
+                          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                             <div className="h-full w-2/3 bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]" />
+                          </div>
+                       </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'vision' && (
+                <div className="space-y-6">
+                   <div className="aspect-video w-full rounded-3xl bg-black/60 border border-white/10 overflow-hidden relative group">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                         <WifiOff size={48} className="text-white/10" />
+                      </div>
+                      <div className="absolute top-6 left-6 flex space-x-2">
+                         <div className="px-3 py-1 rounded-lg bg-red-500 text-white text-[10px] font-bold animate-pulse">LIVE</div>
+                         <div className="px-3 py-1 rounded-lg bg-black/40 backdrop-blur-md text-white text-[10px] font-bold border border-white/10">640x480</div>
+                      </div>
+                   </div>
+                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {['Avoidance', 'Traffic', 'Follow', 'Explore'].map(mode => (
+                        <button key={mode} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-cyan-500/50 transition-all text-center group">
+                           <div className="mb-2 flex justify-center text-gray-400 group-hover:text-cyan-400 transition-colors">
+                              {mode === 'Explore' ? <Compass size={24} /> : <Shield size={24} />}
+                           </div>
+                           <span className="text-xs font-semibold">{mode}</span>
+                        </button>
+                      ))}
+                   </div>
+                </div>
+              )}
+
+              {activeTab === 'setup' && (
+                <div className="space-y-6">
+                   <header>
+                      <h2 className="text-2xl font-bold">Project Initialization</h2>
+                      <p className="text-gray-400 text-sm">Step-by-step guide to bring Garud AI to life.</p>
+                   </header>
+                   <div className="space-y-4">
+                      {STEPS.map((step, index) => (
+                        <StepCard key={step.id} step={step} index={index} />
+                      ))}
+                   </div>
+                </div>
+              )}
+              
+              {activeTab === 'intelligence' && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                   <section className="p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center space-x-3">
+                         <Mic className="text-pink-500" />
+                         <h2 className="text-xl font-bold">Voice Engine</h2>
+                      </div>
+                      <div className="space-y-4">
+                         <div className="p-4 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between">
+                            <span className="text-sm">VAD Sensitivity</span>
+                            <input type="range" className="w-32 accent-pink-500" />
+                         </div>
+                         <div className="p-4 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-between">
+                            <span className="text-sm">Interruption Mode</span>
+                            <div className="h-6 w-10 rounded-full bg-pink-500/20 border border-pink-500/50 relative">
+                               <div className="absolute top-1 right-1 h-4 w-4 rounded-full bg-pink-500" />
+                            </div>
+                         </div>
+                      </div>
+                   </section>
+
+                   <section className="p-8 rounded-3xl bg-white/5 border border-white/10 space-y-6">
+                      <div className="flex items-center space-x-3">
+                         <MessageSquare className="text-cyan-400" />
+                         <h2 className="text-xl font-bold">Custom Responses</h2>
+                      </div>
+                      <div className="space-y-3">
+                         <input className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm" placeholder="User says..." />
+                         <textarea className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm h-24" placeholder="Robot answers..." />
+                         <button className="w-full py-3 rounded-xl bg-cyan-500 font-bold hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all">Add Knowledge</button>
+                      </div>
+                   </section>
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </main>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+      `}</style>
     </div>
   );
 };

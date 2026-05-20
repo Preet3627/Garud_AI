@@ -9,20 +9,25 @@ const bonjour = new Bonjour();
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: 1350,
+    height: 900,
+    vibrancy: 'under-window', // macOS native blur
+    visualEffectState: 'active',
+    transparent: true,
+    frame: true, // Keep standard frame for simplicity, or set to false for custom
+    titleBarStyle: 'hiddenInset', // Better for macOS
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.cjs'),
     },
-    backgroundColor: '#111827',
+    backgroundColor: '#00000000', // Fully transparent
     title: 'Garud AI Robot',
   });
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
+    // mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile('dist/index.html');
   }
@@ -33,13 +38,12 @@ ipcMain.on('start-discovery', () => {
   console.log('Starting robot discovery...');
   bonjour.find({ type: 'http' }, (service) => {
     if (service.name.toLowerCase().includes('garud')) {
-      console.log('Found Garud Robot:', service.addresses[0]);
       mainWindow.webContents.send('robot-discovered', service.addresses[0]);
     }
   });
 });
 
-// --- Remote Execution & Deployment ---
+// --- Remote Execution ---
 async function runSSHCommand(config, command) {
   return new Promise((resolve, reject) => {
     const conn = new Client();
@@ -47,14 +51,11 @@ async function runSSHCommand(config, command) {
       conn.exec(command, (err, stream) => {
         if (err) return reject(err);
         let output = '';
-        stream.on('close', (code, signal) => {
+        stream.on('close', () => {
           conn.end();
           resolve(output);
-        }).on('data', (data) => {
-          output += data;
-        }).stderr.on('data', (data) => {
-          output += data;
-        });
+        }).on('data', (data) => output += data)
+          .stderr.on('data', (data) => output += data);
       });
     }).on('error', reject).connect(config);
   });
@@ -62,7 +63,6 @@ async function runSSHCommand(config, command) {
 
 ipcMain.handle('start-robot-server', async (event, config) => {
   try {
-    // Start main.py in the background
     await runSSHCommand(config, 'nohup python3 ~/garud_ai_robot/main.py > ~/robot.log 2>&1 &');
     return { success: true };
   } catch (error) {
