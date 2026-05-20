@@ -59,18 +59,22 @@ jobs:
         run: npm run electron:build -- -p always
         shell: bash
 
+      - name: List release artifacts
+        run: ls -la release/
+        shell: bash
+
       - name: Upload remaining assets (force overwrite)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="v$(node -p "require('./package.json').version")"
 
-          # Delete and re-upload each asset to handle existing releases
-          for file in release/*.dmg release/*.zip release/*.blockmap release/latest-mac.yml release/latest.yml release/latest-linux.yml; do
+          # Upload ALL files in the release directory
+          for file in release/*; do
             [ -f "$file" ] || continue
             filename=$(basename "$file")
+            echo "Uploading: $filename"
             gh release delete-asset "$VERSION" "$filename" 2>/dev/null || true
             gh release upload "$VERSION" "$file" --clobber
           done
         shell: bash
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
