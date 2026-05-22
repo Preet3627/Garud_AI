@@ -1,124 +1,68 @@
-# 🤖 Garud AI Robot (v0.1.2)
+# Garud AI Robot Control Panel
 
-[![Version](https://img.shields.io/badge/version-0.1.2-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases)
-[![Build Status](https://github.com/Preet3627/Garud_AI/actions/workflows/release.yml/badge.svg)](https://github.com/Preet3627/Garud_AI/actions)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-blue.svg)](https://github.com/Preet3627/Garud_AI)
-[![Framework](https://img.shields.io/badge/framework-Electron%20%2B%20React%20%2B%20Python-orange.svg)](https://github.com/Preet3627/Garud_AI)
-[![AI SDK](https://img.shields.io/badge/AI%20SDK-Ollama%20%2B%20OpenAI%20%2B%20Gemini%20%2B%20Claude-purple.svg)](https://github.com/Preet3627/Garud_AI)
+An advanced, visually stunning Electron-based control panel for the Garud AI Robot. This application serves as the "brain" for the Garud AI hardware, providing a bridge between advanced AI models and physical robot control.
 
-Garud AI is a state-of-the-art, multi-modal robot control system designed for the **Raspbot V2**. It combines a sleek Electron desktop interface with a high-performance Python backend to create a truly seamless human-robot interaction experience.
-
----
-
-## 🌟 Project Vision
-
-The goal of Garud AI is to bridge the gap between complex robotics and intuitive AI. By integrating advanced voice processing, local LLMs, and real-time computer vision, Garud is not just a robot—it's an intelligent companion.
+![Garud AI Visuals](assets/icon.png)
 
 ## 🚀 Key Features
 
-### 🖥️ Native Desktop Experience
-Built with **Electron**, the Garud AI dashboard provides a smooth, low-latency control center for your robot across macOS (Intel/Silicon), Windows, and Linux.
+### 🧠 Intelligence & Vision
+- **Multi-Provider AI**: Support for Ollama (local), OpenAI, Gemini, and Claude.
+- **Vision Support**: Captured screenshots and device camera frames are analyzed by the AI for contextual understanding.
+- **Computer Use Tools**: Garud AI can interact with your OS—executing commands, opening files/URLs, managing your clipboard, and listing directories.
+- **Autonomous Function Calling**: A recursive tool-loop allowing the AI to chain multiple system actions to fulfill complex requests.
 
-### 🎙️ Voice AI Assistant (NEW in v0.1.2)
-- **Hands-Free Mode**: Always-listening with custom wake word support (e.g., "Hey Jarvis", "Hello Garud")
-- **Push-to-Talk**: Quick voice queries without wake word
-- **Automatic Speech Recognition** via browser's native Web Speech API
-- **Text-to-Speech** responses for natural voice interaction
-- **Stunning AI Orb Animation**: Rotating rings, scanning beam, particle bursts, orbit dots
-- **Voice Waveform Equalizer**: Animated bars that pulse with speech activity
-- **Floating Voice Panel**: Real-time listening status overlay
+### 🎙️ Garud Voice Mode
+- **Hands-Free Wake Word**: Activate the assistant by saying "Hey Garud" (customizable).
+- **Advanced Voice-to-Text**: High-accuracy browser-based STT.
+- **Natural Persona**: Optimized conversational mode for a more "alive" assistant experience.
+- **Stunning UI/UX**: Reactive AI Orb and voice waveforms that respond to your voice and the AI's speech.
 
-### 🧠 Multi-Provider AI Brain
-- **5 AI Providers**: Ollama, OpenAI, Gemini, Claude, Custom API
-- **Live Ollama model fetching** from local `/api/tags` endpoint
-- **Real API calls** with proper authentication for all providers
-- **AI Chat Interface** with typing animations and glowing text reveals
-- **Temperature control** for response creativity
+### 🛡️ Security & Stability
+- **Command Risk Tiers**: Hardcoded classification (LOW, MEDIUM, HIGH) for all shell commands.
+- **Biometric Authentication**: 
+  - **macOS**: Touch ID verification required for high-risk commands.
+  - **Windows**: Windows Hello / Admin Elevation prompts for system-level changes.
+- **Permission Management**: Automated macOS accessibility and camera permission handling to prevent "black screen" issues.
 
-### 🧪 Testing Mode (NEW in v0.1.2)
-Use ALL AI features without a physical robot. Perfect for development and experimentation.
+### 🤖 Robot Integration
+- **Auto-Discovery**: Automatic detection of Garud AI robots on the local network using Bonjour/mDNS.
+- **Remote Execution**: Direct SSH-based deployment and management of robot server logic.
+- **Testing Mode**: Full AI and Voice functionality available even without a physical robot connected.
 
-### 📷 Device Camera (Vision Lab)
-- **Real WebRTC camera** with live FPS counter
-- **Multiple camera support** — select from dropdown
-- **Real FPS measurement** (not hardcoded)
+## 🛠️ Technical Stack
+- **Frontend**: React 19, Vite, Tailwind CSS, Framer Motion (for animations).
+- **Desktop**: Electron 34, Preload-bridge for secure IPC communication.
+- **AI Integration**: Custom implementation supporting OpenAI-compatible APIs and Ollama.
+- **Icons**: Lucide React.
 
-### 👁️ Real-time Computer Vision (Robot)
-- **Object Detection**: Powered by YOLOv3-tiny for identifying people, cars, books, and more
-- **Proactive Greeting**: Recognizes faces and greets in Gujarati
-- **Autopilot Modes**: Obstacle Avoidance, Traffic Recognition, Car Following, Explore
+## 🚥 Getting Started
 
-### ⚡ Robot Connectivity
-- **Auto-Discovery**: Uses mDNS (Bonjour) to find your robot on the network
-- **Real connection health checks** with periodic keepalive pings
-- **Subnet scanning** for robots without Bonjour
-- **SSH Remote Deployment**: Start, stop, and monitor the robot's server
-- **Real** (not simulated) connection status
+### Prerequisites
+- Node.js (v18+)
+- npm or yarn
+- Ollama (optional, for local AI)
 
----
-
-## 🛠️ Installation & Setup
-
-### Dashboard (Desktop App)
-
-1. **Clone & Install**:
+### Installation
+1. Clone the repository:
    ```bash
    git clone https://github.com/Preet3627/Garud_AI.git
    cd Garud_AI
+   ```
+2. Install dependencies:
+   ```bash
    npm install
    ```
-2. **Launch**:
+3. Start the development server:
    ```bash
    npm run electron:dev
    ```
-3. **Build Installer**:
-   ```bash
-   npm run electron:build
-   ```
 
-### Robot (Raspberry Pi)
+## 📜 Licensing
+This project is licensed under the **MIT License**. See the `LICENSE` file for details.
 
-Everything you need to set up your Pi is included in the **Setup Guide** directly within the app. It will guide you through:
-- Installing Yahboom drivers.
-- Setting up the Python 3.10+ environment.
-- Running the `main.py` Flask server.
+## 🤝 Contributing
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
-
-## ⚠️ macOS Troubleshooting
-
-If you encounter the "Damaged App" error due to the unsigned developer build:
-1. Move the app to `/Applications`.
-2. Run this in Terminal:
-   ```bash
-   sudo xattr -rd com.apple.quarantine "/Applications/Garud AI Robot.app"
-   ```
-
----
-
-## 📂 Repository Structure
-
-- `core/`: Python source for robot hardware control and vision.
-- `utils/`: Utility functions for TTS and networking.
-- `components/`: React UI components for the dashboard.
-- `release-notes/`: Detailed history of every version update.
-- `electron-main.cjs`: The "brain" of the desktop application.
-- `voice_agent.py`: The Pipecat-powered voice interaction layer.
-
-## 📦 Release History
-
-- [v0.1.2 - Voice AI & Testing Mode](./release-notes/v0.1.2.md)
-- [v0.1.1 - Auto-Pilot Update](./release-notes/v0.1.1.md)
-- [v0.1.0 - Initial Desktop Release](./release-notes/v0.1.0.md)
-
----
-
-## 📄 License & Credits
-
-**License**: MIT
-**Hardware**: Yahboom Raspbot V2 (Raspberry Pi 4B recommended)
-**Developed by**: The Garud AI Team
-
----
-
-*Built with speed, precision, and Dhurandhar energy.* 🏁
+**Garud AI Team** - *Bringing Intelligence to Motion.*

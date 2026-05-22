@@ -27,6 +27,8 @@ export interface CustomResponse {
 export type Tab = 'dashboard' | 'vision' | 'intelligence' | 'assistant' | 'settings' | 'setup';
 export type AutopilotMode = 'off' | 'avoid' | 'traffic' | 'follow' | 'explore';
 export type AIProvider = 'ollama' | 'openai' | 'gemini' | 'claude' | 'custom';
+export type STTEngine = 'browser' | 'deepgram' | 'whisper-local' | 'pipecat';
+export type TTSProvider = 'browser' | 'piper-wasm' | 'system' | 'pipecat';
 
 export interface AIConfig {
   provider: AIProvider;
@@ -34,6 +36,18 @@ export interface AIConfig {
   apiKey: string;
   baseUrl: string;
   temperature: number;
+  useTools: boolean;
+  useVision: boolean;
+  voiceMode: boolean;
+  sttEngine: STTEngine;
+  deepgramApiKey: string;
+  ttsProvider: TTSProvider;
+  ttsVoice: string;
+  pipecatRepoPath: string;
+  pipecatPythonPath: string;
+  pipecatSttModel: string;
+  pipecatTtsVoice: string;
+  speakResponses: boolean;
 }
 
 export interface VoiceState {
