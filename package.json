@@ -50,10 +50,7 @@
     "directories": {
       "output": "release"
     },
-    "publish": {
-      "provider": "github",
-      "releaseType": "draft"
-    },
+    "publish": null,
     "releaseInfo": {
       "releaseNotesFile": "release-notes/v0.1.4.md"
     },
@@ -80,13 +77,6 @@
             "x64",
             "arm64"
           ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
         }
       ],
       "icon": "assets/icon.png"
@@ -100,13 +90,6 @@
             "x64",
             "arm64"
           ]
-        },
-        {
-          "target": "zip",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
         }
       ],
       "icon": "assets/icon.png"
@@ -116,20 +99,6 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "deb",
-          "arch": [
-            "x64",
-            "arm64"
-          ]
-        },
-        {
-          "target": "zip",
           "arch": [
             "x64",
             "arm64"

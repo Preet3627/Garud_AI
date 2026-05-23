@@ -83,7 +83,7 @@ jobs:
       - name: Build and package
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: npm run electron:build
+        run: npm run electron:build -- --publish never
         shell: bash
 
       - name: List release artifacts
