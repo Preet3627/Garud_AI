@@ -1,8 +1,17 @@
 # Garud AI Robot Control Panel
 
+[![Version](https://img.shields.io/badge/version-0.1.3-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases/tag/v0.1.3)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 An advanced, visually stunning Electron-based control panel for the Garud AI Robot. This application serves as the "brain" for the Garud AI hardware, providing a bridge between advanced AI models and physical robot control.
 
 ![Garud AI Visuals](assets/icon.png)
+
+## 🆕 Latest Update: v0.1.3
+This version introduces significant stability improvements to the Hands-Free Voice Mode and highly precise wake word detection.
+- **Improved Voice Stability**: Faster audio interruption and smoother listening/speaking transitions.
+- **Wake Word Precision**: Full support for special characters and automated case-normalization.
+- **Read the full [v0.1.3 Release Notes](release-notes/v0.1.3.md)**.
 
 ## 🚀 Key Features
 
