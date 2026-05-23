@@ -81,8 +81,9 @@ docker run -d -p 5002:5002 --name garud-brain garud-ai-bridge
 ---
    ### ⚠️ macOS "Damaged App" Fix
 Since this is an unsigned developer build, macOS may flag it. If you get a "damaged" error, run this in Terminal:
-`sudo xattr -rd com.apple.quarantine /Applications/Garud\ AI\ Robot.app`
 ---
+`sudo xattr -rd com.apple.quarantine /Applications/Garud\ AI\ Robot.app`
+
 
 ## 📜 Licensing
 **Copyright (c) 2026 Garud AI Team. All Rights Reserved.**
