@@ -80,10 +80,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and publish
+      - name: Build and package
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: npm run electron:build -- -p always
+        run: npm run electron:build
         shell: bash
 
       - name: List release artifacts
@@ -99,11 +99,8 @@ jobs:
 
           echo "Target Version: $VERSION"
 
-          # Only upload .exe, .dmg, and .AppImage
-          # Use shell globbing carefully across different OS
-          for file in release/*.exe release/*.dmg release/*.AppImage; do
-            [ -e "$file" ] || continue
-            
+          # Use find to safely locate files across different OS environments
+          find release -maxdepth 1 -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" \) | while read -r file; do
             filename=$(basename "$file")
             echo "Processing: $filename"
             
