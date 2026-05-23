@@ -13,6 +13,9 @@
 # You can then run 'pip install -r requirements.txt' (after commenting them out).
 # Note: PyAudio may require special installation steps on Windows.
 
+FastAPI
+uvicorn
+pydantic
 Flask
 Flask-Cors
 google-generativeai

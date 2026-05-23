@@ -1,17 +1,18 @@
 # Garud AI Robot Control Panel
 
-[![Version](https://img.shields.io/badge/version-0.1.3-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases/tag/v0.1.3)
+[![Version](https://img.shields.io/badge/version-0.1.4-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases/tag/v0.1.4)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 An advanced, visually stunning Electron-based control panel for the Garud AI Robot. This application serves as the "brain" for the Garud AI hardware, providing a bridge between advanced AI models and physical robot control.
 
 ![Garud AI Visuals](assets/icon.png)
 
-## 🆕 Latest Update: v0.1.3
-This version introduces significant stability improvements to the Hands-Free Voice Mode and highly precise wake word detection.
-- **Improved Voice Stability**: Faster audio interruption and smoother listening/speaking transitions.
-- **Wake Word Precision**: Full support for special characters and automated case-normalization.
-- **Read the full [v0.1.3 Release Notes](release-notes/v0.1.3.md)**.
+## 🆕 Latest Update: v0.1.4
+This version introduces a major architectural upgrade and professional deployment options.
+- **FastAPI Migration**: High-performance, asynchronous AI bridge for faster voice processing.
+- **Docker Support**: One-command deployment for the AI "brain" on any hardware.
+- **Clean Releases**: Optimized release workflow that only provides essential `.exe`, `.dmg`, and `.AppImage` binaries.
+- **Read the full [v0.1.4 Release Notes](release-notes/v0.1.4.md)**.
 
 ## 🚀 Key Features
 
@@ -21,11 +22,21 @@ This version introduces significant stability improvements to the Hands-Free Voi
 - **Computer Use Tools**: Garud AI can interact with your OS—executing commands, opening files/URLs, managing your clipboard, and listing directories.
 - **Autonomous Function Calling**: A recursive tool-loop allowing the AI to chain multiple system actions to fulfill complex requests.
 
-### 🎙️ Garud Voice Mode
+### 🎙️ Garud Voice Mode (Powered by FastAPI)
 - **Hands-Free Wake Word**: Activate the assistant by saying "Hey Garud" (customizable).
 - **Advanced Voice-to-Text**: High-accuracy browser-based STT.
 - **Natural Persona**: Optimized conversational mode for a more "alive" assistant experience.
 - **Stunning UI/UX**: Reactive AI Orb and voice waveforms that respond to your voice and the AI's speech.
+
+### 🐳 Docker Deployment (AI Bridge)
+You can now run the Garud AI bridge inside a Docker container for maximum stability:
+```bash
+# Build the image
+docker build -t garud-ai-bridge .
+
+# Run the container
+docker run -d -p 5002:5002 --name garud-brain garud-ai-bridge
+```
 
 ### 🛡️ Security & Stability
 - **Command Risk Tiers**: Hardcoded classification (LOW, MEDIUM, HIGH) for all shell commands.
@@ -42,7 +53,7 @@ This version introduces significant stability improvements to the Hands-Free Voi
 ## 🛠️ Technical Stack
 - **Frontend**: React 19, Vite, Tailwind CSS, Framer Motion (for animations).
 - **Desktop**: Electron 34, Preload-bridge for secure IPC communication.
-- **AI Integration**: Custom implementation supporting OpenAI-compatible APIs and Ollama.
+- **AI Integration**: Custom FastAPI implementation supporting OpenAI-compatible APIs and Ollama.
 - **Icons**: Lucide React.
 
 ## 🚥 Getting Started
@@ -51,6 +62,7 @@ This version introduces significant stability improvements to the Hands-Free Voi
 - Node.js (v18+)
 - npm or yarn
 - Ollama (optional, for local AI)
+- Docker (optional, for containerized deployment)
 
 ### Installation
 1. Clone the repository:

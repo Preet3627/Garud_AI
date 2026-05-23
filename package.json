@@ -3,7 +3,7 @@
   "private": true,
   "description": "Desktop control panel for Garud AI Robot with Pipecat and Ollama integration.",
   "author": "Garud AI Team <preetjgfilj2@gmail.com>",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/Preet3627/Garud_AI.git"
@@ -54,7 +54,7 @@
       "releaseType": "draft"
     },
     "releaseInfo": {
-      "releaseNotesFile": "release-notes/v0.1.3.md"
+      "releaseNotesFile": "release-notes/v0.1.4.md"
     },
     "asarUnpack": [
       "pipecat_bridge.py"
