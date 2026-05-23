@@ -24,7 +24,7 @@ export interface CustomResponse {
   answer: string;
 }
 
-export type Tab = 'dashboard' | 'vision' | 'intelligence' | 'assistant' | 'settings' | 'setup';
+export type Tab = 'dashboard' | 'vision' | 'intelligence' | 'assistant' | 'robot' | 'settings' | 'setup';
 export type AutopilotMode = 'off' | 'avoid' | 'traffic' | 'follow' | 'explore';
 export type AIProvider = 'ollama' | 'openai' | 'gemini' | 'claude' | 'custom';
 export type STTEngine = 'browser' | 'deepgram' | 'whisper-local' | 'pipecat';

@@ -28,3 +28,6 @@ RPi.GPIO
 SpeechRecognition
 PyAudio
 Pillow
+pybullet
+ollama
+opencv-python-headless

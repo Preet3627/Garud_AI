@@ -1,26 +1,32 @@
 # Garud AI Robot Control Panel
 
-[![Version](https://img.shields.io/badge/version-0.1.4-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases/tag/v0.1.4)
+[![Version](https://img.shields.io/badge/version-0.1.5-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases/tag/v0.1.5)
 [![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
-An advanced, visually stunning Electron-based control panel for the Garud AI Robot. This application serves as the "brain" for the Garud AI hardware, providing a bridge between advanced AI models and physical robot control.
+An advanced, visually stunning Electron-based control panel and **Robotics Operating System Simulator** for the Garud AI Robot. This application serves as the "brain" for the Garud AI hardware, providing a bridge between advanced AI models and physical robot control.
 
 ![Garud AI Visuals](assets/icon.png)
 
-## 🆕 Latest Update: v0.1.4
-This version introduces a major architectural upgrade and professional deployment options.
-- **FastAPI Migration**: High-performance, asynchronous AI bridge for faster voice processing.
-- **Docker Support**: One-command deployment for the AI "brain" on any hardware.
-- **Clean Releases**: Optimized release workflow that only provides essential `.exe`, `.dmg`, and `.AppImage` binaries.
-- **Read the full [v0.1.4 Release Notes](release-notes/v0.1.4.md)**.
+## 🆕 Latest Update: v0.1.5
+This version introduces a complete **3D Robotics Simulation & Vision AI** suite.
+- **3D World (PyBullet)**: Real-time 3D physics simulation with obstacles and URDF robot models.
+- **Vision Brain**: Obstacle avoidance powered by local Vision Models (Llava) via Ollama.
+- **Live Telemetry**: High-fidelity dashboard for Motor RPM, Battery (12.4V), and CPU metrics.
+- **Hardware Guide**: Interactive deployment diagrams for Docker and SSH setup on Raspberry Pi.
+- **Read the full [v0.1.5 Release Notes](release-notes/v0.1.5.md)**.
 
 ## 🚀 Key Features
 
+### 🤖 Robotics OS & Simulation
+- **Physics World**: Built-in PyBullet environment for testing autonomous logic without hardware.
+- **Dynamic Obstacles**: Real-time collision detection and AI-based navigation paths.
+- **Virtual GPIO**: Emulated Raspberry Pi GPIO layer for seamless code migration to real robots.
+- **Telemetry HUD**: futuristic 3D stream overlay with live system vitals.
+
 ### 🧠 Intelligence & Vision
 - **Multi-Provider AI**: Support for Ollama (local), OpenAI, Gemini, and Claude.
-- **Vision Support**: Captured screenshots and device camera frames are analyzed by the AI for contextual understanding.
-- **Computer Use Tools**: Garud AI can interact with your OS—executing commands, opening files/URLs, managing your clipboard, and listing directories.
-- **Autonomous Function Calling**: A recursive tool-loop allowing the AI to chain multiple system actions to fulfill complex requests.
+- **Vision Models**: Dynamic selection of LLava/Vision models (1B to 13B+) with live Ollama fetching.
+- **Autonomous Function Calling**: A recursive tool-loop allowing the AI to chain multiple system actions.
 
 ### 🎙️ Garud Voice Mode (Powered by FastAPI)
 - **Hands-Free Wake Word**: Activate the assistant by saying "Hey Garud" (customizable).

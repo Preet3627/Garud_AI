@@ -39,7 +39,17 @@ services_cache = {
     "tts": {}
 }
 
+from backend import robot_controller
+
+from autonomy import agent_loop
+
 # --- Models ---
+
+class AutonomyRequest(BaseModel):
+    enable: bool
+
+class RobotCommandRequest(BaseModel):
+    command: str
 
 class TranscribeRequest(BaseModel):
     pcmBase64: str
@@ -151,6 +161,72 @@ async def synthesize(req: SynthesizeRequest):
             "sampleRate": sample_rate,
             "voice": req.voice
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/robot/command")
+async def robot_command(req: RobotCommandRequest):
+    try:
+        result = robot_controller.handle_command(req.command)
+        return {"success": True, "result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/robot/telemetry")
+async def robot_telemetry():
+    try:
+        telemetry = robot_controller.get_robot_telemetry()
+        return {"success": True, "telemetry": telemetry}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+from fastapi import FastAPI, HTTPException, Response
+
+# ... (other imports)
+
+from robot_core.vision import vision
+
+# --- Models ---
+
+class VisionModelRequest(BaseModel):
+    model: str
+
+# ... (inside existing routes)
+
+@app.get("/robot/vision/models")
+async def list_vision_models():
+    try:
+        import ollama
+        models = ollama.list()
+        # Filter for models that might support vision (usually have 'llava', 'vision', or 'moondream' in name)
+        # Or just return all available local models
+        return {"success": True, "models": models.get('models', [])}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+@app.post("/robot/vision/model")
+async def set_vision_model(req: VisionModelRequest):
+    try:
+        vision.model = req.model
+        return {"success": True, "current_model": vision.model}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/robot/camera")
+async def robot_camera():
+    frame = robot_controller.get_camera_frame()
+    if frame:
+        return Response(content=frame, media_type="image/jpeg")
+    raise HTTPException(status_code=404, detail="No camera frame available")
+
+@app.post("/robot/autonomy")
+async def robot_autonomy(req: AutonomyRequest):
+    try:
+        if req.enable:
+            agent_loop.agent.start()
+        else:
+            agent_loop.agent.stop()
+        return {"success": True, "autonomous": req.enable}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -45,6 +45,8 @@ import { StepCard } from './components/StepCard';
 import { renderMarkdown, stripMarkdownForSpeech } from './markdown';
 import { DEFAULT_PIPER_VOICES, PiperSpeechController } from './piperTts';
 import { DEFAULT_PIPECAT_PIPER_VOICES, PipecatSpeechController } from './pipecatTts';
+import { SimulationView } from './components/SimulationView';
+import { RobotSetupGuide } from './components/RobotSetupGuide';
 import type { LogEntry, LogLevel, AIConfig, AIProvider, VoiceState, Tab, STTEngine } from './types';
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string };
@@ -1282,6 +1284,7 @@ async function queryAI(
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [ollamaModels, setOllamaModels] = useState<any[]>([]);
   const [darkMode, setDarkMode] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -1813,6 +1816,19 @@ const App: React.FC = () => {
     speech,
   ]);
 
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const res = await fetch('http://localhost:5002/robot/vision/models');
+        const data = await res.json();
+        if (data.success) setOllamaModels(data.models);
+      } catch (e) {
+        console.error('Failed to fetch Ollama models:', e);
+      }
+    };
+    fetchModels();
+  }, []);
+
   const toggleVoice = useCallback(async () => {
     if (voiceState.isHandsFree) {
       stopAudioOutput();
@@ -1944,7 +1960,9 @@ const App: React.FC = () => {
           <SidebarItem id="vision" icon={Camera} label="Vision Lab" />
           <SidebarItem id="intelligence" icon={Cpu} label="AI Brain" />
           <SidebarItem id="assistant" icon={Headphones} label="Voice AI" badge="LIVE" />
+          <SidebarItem id="robot" icon={Bot} label="Robot Core" badge="NEW" />
           <SidebarItem id="settings" icon={Settings} label="Settings" />
+
           <SidebarItem id="setup" icon={FileCode} label="Deployment" />
         </nav>
         <button
@@ -2550,6 +2568,158 @@ const App: React.FC = () => {
                           </div>
                         </div>
                       )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'robot' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left Column: AI & Controls */}
+                    <div className="space-y-6">
+                      <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
+                        <div className="flex items-center space-x-3">
+                          <BrainCircuit className="text-purple-400" size={20} />
+                          <h3 className="font-bold">Autonomous Brain</h3>
+                        </div>
+                        <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Selected Provider</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">Ollama (Llama 3)</span>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                              <span className="text-[10px] text-green-400 font-bold uppercase">Ready</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-4 bg-black/20 rounded-2xl border border-white/5 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Vision Brain</p>
+                            <button 
+                              onClick={async () => {
+                                try {
+                                  const res = await fetch('http://localhost:5002/robot/vision/models');
+                                  const data = await res.json();
+                                  if (data.success) setOllamaModels(data.models);
+                                } catch (e) { console.error(e); }
+                              }}
+                              className="p-1 hover:bg-white/5 rounded transition-colors"
+                            >
+                              <RefreshCw size={10} className="text-gray-500" />
+                            </button>
+                          </div>
+                          
+                          <select 
+                            onChange={(e) => fetch('http://localhost:5002/robot/vision/model', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ model: e.target.value })
+                            })}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
+                          >
+                            {ollamaModels.length > 0 ? (
+                              ollamaModels.map((m: any) => (
+                                <option key={m.name} value={m.name}>
+                                  {m.name} ({(m.size / (1024**3)).toFixed(1)} GB)
+                                </option>
+                              ))
+                            ) : (
+                              <option>llava (Default)</option>
+                            )}
+                          </select>
+
+                          <div className="flex items-center justify-between px-1">
+                            <span className="text-[10px] font-medium text-gray-400">Status</span>
+                            <div className="flex items-center space-x-1">
+                              <div className="w-1 h-1 rounded-full bg-cyan-500 animate-pulse" />
+                              <span className="text-[10px] text-cyan-400 font-bold uppercase">Active</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => fetch('http://localhost:5002/robot/autonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enable: true }) })}
+                          className="w-full px-4 py-3 bg-cyan-500 rounded-2xl text-white text-sm font-bold shadow-lg shadow-cyan-500/20 hover:scale-[1.02] transition-transform"
+                        >
+                          Enable Autonomy
+                        </button>
+                        <button 
+                          onClick={() => fetch('http://localhost:5002/robot/autonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enable: false }) })}
+                          className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-sm font-bold transition-all"
+                        >
+                          Disable Autonomy
+                        </button>
+                      </div>
+
+                      <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
+                        <div className="flex items-center space-x-3">
+                          <ActivityIcon className="text-cyan-400" size={20} />
+                          <h3 className="font-bold">Manual Overdrive</h3>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <div />
+                          <button onMouseDown={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'forward' }) })} className="p-4 bg-white/5 hover:bg-white/10 rounded-xl flex justify-center"><ChevronRight className="-rotate-90" /></button>
+                          <div />
+                          <button onMouseDown={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'turn_left' }) })} className="p-4 bg-white/5 hover:bg-white/10 rounded-xl flex justify-center"><ChevronRight className="rotate-180" /></button>
+                          <button onClick={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'stop' }) })} className="p-4 bg-red-500/20 text-red-400 rounded-xl flex justify-center hover:bg-red-500/30 transition-colors"><XCircle /></button>
+                          <button onMouseDown={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'turn_right' }) })} className="p-4 bg-white/5 hover:bg-white/10 rounded-xl flex justify-center"><ChevronRight /></button>
+                          <div />
+                          <button onMouseDown={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'backward' }) })} className="p-4 bg-white/5 hover:bg-white/10 rounded-xl flex justify-center"><ChevronRight className="rotate-90" /></button>
+                          <div />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Center Column: 3D Visualizer */}
+                    <div className="lg:col-span-2 space-y-6">
+                      <SimulationView />
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
+                          <div className="flex items-center space-x-3">
+                            <Database className="text-green-400" size={20} />
+                            <h3 className="font-bold">System Telemetry</h3>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between group">
+                              <span className="text-xs text-gray-500">Main Battery</span>
+                              <div className="flex items-center space-x-2">
+                                <div className="w-24 h-2 bg-white/5 rounded-full overflow-hidden border border-white/10">
+                                  <motion.div 
+                                    initial={{ width: 0 }} 
+                                    animate={{ width: '85%' }} 
+                                    className="h-full bg-green-500" 
+                                  />
+                                </div>
+                                <span className="text-xs font-mono text-green-400">12.4V</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-500">Core Temp</span>
+                              <span className="text-xs font-mono text-white">48.2°C</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-500">WiFi Signal</span>
+                              <span className="text-xs font-mono text-cyan-400">-42 dBm</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-gray-500">Motor RPM</span>
+                              <div className="flex space-x-2">
+                                <span className="text-[10px] font-mono bg-white/5 px-1.5 py-0.5 rounded text-white">L:142</span>
+                                <span className="text-[10px] font-mono bg-white/5 px-1.5 py-0.5 rounded text-white">R:138</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="p-6 rounded-3xl bg-white/5 border border-white/10 flex flex-col justify-center items-center text-center space-y-2">
+                          <Zap className="text-yellow-400 mb-2" size={32} />
+                          <h4 className="font-bold text-sm">Hardware Link</h4>
+                          <p className="text-[10px] text-gray-500">Currently running in <span className="text-cyan-400 font-bold">SIMULATION MODE</span>. Real Pi hardware detected: None.</p>
+                        </div>
+                      </div>
+
+                      <RobotSetupGuide />
                     </div>
                   </div>
                 </div>
