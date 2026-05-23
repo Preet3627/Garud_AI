@@ -6,20 +6,64 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., v0.1.3)'
+        description: 'Release version (e.g., v0.1.4)'
         required: false
         default: ''
 
 permissions:
   contents: write
+  packages: write
+  actions: write
 
 jobs:
-  build-and-release:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=v$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+
+      - name: Create release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          VERSION="$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')"
+          
+          echo "Creating release for $VERSION"
+          
+          # Check if release exists
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            echo "Release $VERSION already exists."
+          else
+            gh release create "$VERSION" \
+              --title "$VERSION" \
+              --notes-file "release-notes/$VERSION.md" \
+              --draft \
+              --generate-notes
+          fi
+        shell: bash
+
+  build-and-upload:
+    needs: create-release
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,32 +80,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Create release (if missing)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          VERSION=""
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VERSION="${{ github.event.inputs.version }}"
-          else
-            VERSION="v$(node -p "require('./package.json').version")"
-          fi
-
-          # Normalize version to lowercase (handle uppercase V prefix)
-          VERSION="$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')"
-
-          # Create draft release if it doesn't exist, or get existing one
-          gh release view "$VERSION" --json id 2>/dev/null || \
-            gh release create "$VERSION" \
-              --title "$VERSION" \
-              --notes-file "release-notes/$VERSION.md" \
-              --draft \
-              --generate-notes
-        shell: bash
-
       - name: Build and publish
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: npm run electron:build -- -p always
         shell: bash
 
@@ -71,16 +92,16 @@ jobs:
 
       - name: Upload specific assets (force overwrite)
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          VERSION="v$(node -p "require('./package.json').version")"
+          VERSION="${{ needs.create-release.outputs.version }}"
           VERSION="$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')"
 
           echo "Target Version: $VERSION"
 
           # Only upload .exe, .dmg, and .AppImage
-          for file in release/*.{exe,dmg,AppImage}; do
-            # Skip if no matches found
+          # Use shell globbing carefully across different OS
+          for file in release/*.exe release/*.dmg release/*.AppImage; do
             [ -e "$file" ] || continue
             
             filename=$(basename "$file")
