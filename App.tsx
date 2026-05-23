@@ -1506,12 +1506,19 @@ const App: React.FC = () => {
 
   const speakResponse = useCallback(
     async (text: string) => {
+      stopAudioOutput();
+      
       const cleanedText = stripMarkdownForSpeech(text);
       if (!cleanedText) {
+        // If we were in hands-free mode, we should ensure it's resumed
+        // even if there is nothing to speak.
+        if (handsFreeRef.current && !voiceState.isSpeaking) {
+          setSpeechMode('hands-free');
+          speech.resume();
+        }
         return;
       }
 
-      stopAudioOutput();
       setVoiceState((previous) => ({ ...previous, isSpeaking: true, response: text }));
 
       const resumeHandsFree = handsFreeRef.current;
@@ -1712,12 +1719,18 @@ const App: React.FC = () => {
 
   useEffect(() => {
     speech.onFinalTranscript((text, mode) => {
-      const normalizedWake = wakeWordRef.current.toLowerCase().trim();
+      const rawWake = wakeWordRef.current.trim();
+      const normalizedWake = rawWake.toLowerCase();
       const loweredText = text.toLowerCase().trim();
+
+      // Helper to escape regex special characters
+      const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const wakeRegex = new RegExp(escapeRegExp(normalizedWake), 'ig');
 
       if (voiceState.isSpeaking && mode === 'hands-free' && loweredText.includes(normalizedWake)) {
         stopAudioOutput();
-        const question = text.replace(new RegExp(normalizedWake, 'ig'), '').trim();
+        // Remove wake word and leading/trailing punctuation/spaces
+        const question = text.replace(wakeRegex, '').replace(/^[.,!?;:\s]+/, '').trim();
         if (question) {
           void processVoiceCommand(question);
           return;
@@ -1728,6 +1741,7 @@ const App: React.FC = () => {
         handsFreeFollowupTimerRef.current = setTimeout(() => {
           handsFreeFollowupArmedRef.current = false;
         }, 10000);
+        void speakResponse('I am listening.');
         return;
       }
 
@@ -1742,7 +1756,7 @@ const App: React.FC = () => {
 
       if (mode === 'hands-free') {
         if (loweredText.includes(normalizedWake)) {
-          const question = text.replace(new RegExp(normalizedWake, 'ig'), '').trim();
+          const question = text.replace(wakeRegex, '').replace(/^[.,!?;:\s]+/, '').trim();
           if (question) {
             handsFreeFollowupArmedRef.current = false;
             if (handsFreeFollowupTimerRef.current) clearTimeout(handsFreeFollowupTimerRef.current);
@@ -1763,6 +1777,7 @@ const App: React.FC = () => {
           handsFreeFollowupArmedRef.current = false;
           if (handsFreeFollowupTimerRef.current) clearTimeout(handsFreeFollowupTimerRef.current);
           void processVoiceCommand(text);
+          return;
         }
       }
     });
@@ -2566,7 +2581,7 @@ const App: React.FC = () => {
                           <div className="flex space-x-3">
                             <input
                               value={wakeWord}
-                              onChange={(event) => setWakeWord(event.target.value.toLowerCase())}
+                              onChange={(event) => setWakeWord(event.target.value)}
                               className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-sm font-mono outline-none focus:border-cyan-500/50"
                               placeholder="hey garud"
                             />
