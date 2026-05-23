@@ -1,7 +1,7 @@
 # Garud AI Robot Control Panel
 
 [![Version](https://img.shields.io/badge/version-0.1.4-cyan.svg)](https://github.com/Preet3627/Garud_AI/releases/tag/v0.1.4)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Proprietary](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
 
 An advanced, visually stunning Electron-based control panel for the Garud AI Robot. This application serves as the "brain" for the Garud AI hardware, providing a bridge between advanced AI models and physical robot control.
 
@@ -80,7 +80,9 @@ docker run -d -p 5002:5002 --name garud-brain garud-ai-bridge
    ```
 
 ## 📜 Licensing
-This project is licensed under the **MIT License**. See the `LICENSE` file for details.
+**Copyright (c) 2026 Garud AI Team. All Rights Reserved.**
+
+This project is proprietary and confidential. Unauthorized copying, distribution, or use of this software is strictly prohibited. See the `LICENSE` file for details.
 
 ## 🤝 Contributing
 Contributions are welcome! Please feel free to submit a Pull Request.
