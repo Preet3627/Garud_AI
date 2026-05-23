@@ -66,18 +66,25 @@ jobs:
         run: ls -la release/
         shell: bash
 
-      - name: Upload remaining assets (force overwrite)
+      - name: Upload specific assets (force overwrite)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="v$(node -p "require('./package.json').version")"
+          VERSION="$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')"
 
-          # Upload ALL files in the release directory
-          for file in release/*; do
-            [ -f "$file" ] || continue
+          echo "Target Version: $VERSION"
+
+          # Only upload .exe, .dmg, and .AppImage
+          for file in release/*.{exe,dmg,AppImage}; do
+            # Skip if no matches found
+            [ -e "$file" ] || continue
+            
             filename=$(basename "$file")
-            echo "Uploading: $filename"
-            gh release delete-asset "$VERSION" "$filename" 2>/dev/null || true
+            echo "Processing: $filename"
+            
+            # Delete if exists to avoid duplication, then upload with clobber
+            gh release delete-asset "$VERSION" "$filename" -y 2>/dev/null || true
             gh release upload "$VERSION" "$file" --clobber
           done
         shell: bash
