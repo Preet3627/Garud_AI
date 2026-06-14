@@ -21,13 +21,15 @@ def handle_command(command: str):
     # Sync with simulation if available
     if sim.connected:
         if command == "forward":
-            sim.move_robot(0.1, 0)
+            sim.move_robot(10.0, 0)
         elif command == "backward":
-            sim.move_robot(-0.1, 0)
+            sim.move_robot(-10.0, 0)
         elif command == "turn_left":
-            sim.move_robot(0, 0.5)
+            sim.move_robot(0, 4.0)
         elif command == "turn_right":
-            sim.move_robot(0, -0.5)
+            sim.move_robot(0, -4.0)
+        elif command == "stop":
+            sim.move_robot(0, 0)
         
         pos, orn = sim.get_robot_pose()
         state.update_position(pos, orn)
@@ -60,7 +62,7 @@ def get_robot_telemetry():
     }
 
 def get_camera_frame():
-    if sim.connected and sim.last_frame:
+    if sim.connected and sim.last_frame is not None:
         return sim.last_frame
     return None
 

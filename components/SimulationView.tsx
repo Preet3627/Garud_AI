@@ -2,23 +2,27 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Camera, RefreshCw, Maximize2, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export const SimulationView: React.FC = () => {
+interface SimulationViewProps {
+  bridgePort?: number;
+}
+
+export const SimulationView: React.FC<SimulationViewProps> = ({ bridgePort }) => {
   const [frameUrl, setFrameUrl] = useState<string>('');
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchFrame = () => {
-    // Adding a timestamp to bust cache
-    setFrameUrl(`http://localhost:5002/robot/camera?t=${Date.now()}`);
-    setIsConnected(true);
-  };
-
   useEffect(() => {
-    timerRef.current = setInterval(fetchFrame, 100); // 10 FPS for UI
+    if (!bridgePort) return;
+    const fetchFrame = () => {
+      setFrameUrl(`http://localhost:${bridgePort}/robot/camera?t=${Date.now()}`);
+      setIsConnected(true);
+    };
+    fetchFrame();
+    timerRef.current = setInterval(fetchFrame, 100);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, []);
+  }, [bridgePort]);
 
   return (
     <div className="relative group rounded-3xl overflow-hidden bg-black aspect-video border border-white/10 shadow-2xl">

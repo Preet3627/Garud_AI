@@ -34,16 +34,26 @@ function getPipecatScriptPath() {
 
 function resolvePipecatPythonPath(requestedPath = '') {
   const trimmed = String(requestedPath || '').trim();
-  if (trimmed) {
+  if (trimmed && trimmed.includes('/')) {
     return trimmed;
   }
 
-  const bundledPath = '/Users/sandipkumarpatel/Developer/Projects/pipecat/.venv/bin/python';
-  if (fs.existsSync(bundledPath)) {
-    return bundledPath;
+  const candidates = [
+    '/Users/sandipkumarpatel/Developer/Projects/pipecat/.venv/bin/python',
+    '/opt/homebrew/Caskroom/miniforge/base/bin/python3',
+    'python3',
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate === 'python3' && trimmed !== 'python3') {
+      return candidate;
+    }
+    if (candidate !== 'python3' && fs.existsSync(candidate)) {
+      return candidate;
+    }
   }
 
-  return 'python3';
+  return trimmed || 'python3';
 }
 
 function resolvePipecatRepoPath(requestedPath = '') {
@@ -853,7 +863,25 @@ ipcMain.handle('stop-robot-server', async (_event, config) => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  createWindow();
+
+  try {
+    const result = await ensurePipecatBridge({});
+    console.log('[Garud AI] Pipecat bridge auto-started on port', result.port);
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('pipecat-bridge-status', {
+        running: true,
+        port: result.port,
+        repoPath: result.repoPath,
+        pythonPath: result.pythonPath,
+        health: result.health,
+      });
+    }
+  } catch (error) {
+    console.error('[Garud AI] Pipecat bridge auto-start failed:', error.message);
+  }
+});
 
 app.on('window-all-closed', () => {
   stopSystemSpeech();

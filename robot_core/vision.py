@@ -1,8 +1,3 @@
-import ollama
-import base64
-import io
-from PIL import Image
-
 class RobotVision:
     def __init__(self, model="llava"):
         self.model = model
@@ -14,8 +9,7 @@ class RobotVision:
             return "No frame data"
 
         try:
-            # Use Ollama for vision analysis
-            # We ask it specifically about navigation and obstacles
+            import ollama
             prompt = """
             You are a robot navigation assistant. Analyze this image from the robot's front camera.
             Is there an obstacle directly in front of the robot (within 1 meter)?

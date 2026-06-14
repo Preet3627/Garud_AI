@@ -1285,6 +1285,7 @@ async function queryAI(
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [ollamaModels, setOllamaModels] = useState<any[]>([]);
+  const [wasdMode, setWasdMode] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -1305,6 +1306,8 @@ const App: React.FC = () => {
   const [systemVoices, setSystemVoices] = useState<string[]>([]);
   const [pipecatBridge, setPipecatBridge] = useState<any | null>(null);
   const [isPipecatBridgeBusy, setIsPipecatBridgeBusy] = useState(false);
+  const [currentVisionModel, setCurrentVisionModel] = useState<string>('');
+  const [visionInstallStatus, setVisionInstallStatus] = useState<string>('idle');
 
   const [aiConfig, setAiConfig] = useState<AIConfig>({
     provider: 'ollama',
@@ -1320,7 +1323,7 @@ const App: React.FC = () => {
     ttsProvider: 'system',
     ttsVoice: '',
     pipecatRepoPath: '/Users/sandipkumarpatel/Developer/Projects/pipecat',
-    pipecatPythonPath: 'python3',
+    pipecatPythonPath: '',
     pipecatSttModel: 'Systran/faster-distil-whisper-medium.en',
     pipecatTtsVoice: DEFAULT_PIPECAT_PIPER_VOICES[0],
     speakResponses: true,
@@ -1361,6 +1364,13 @@ const App: React.FC = () => {
   useEffect(() => {
     handsFreeRef.current = voiceState.isHandsFree;
   }, [voiceState.isHandsFree]);
+
+  useEffect(() => {
+    const cleanup = (window as any).electronAPI?.onPipecatBridgeStatus?.((data: any) => {
+      if (data) setPipecatBridge(data);
+    });
+    return () => { if (typeof cleanup === 'function') cleanup(); };
+  }, []);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1462,6 +1472,79 @@ const App: React.FC = () => {
   useEffect(() => {
     void refreshPipecatBridge();
   }, [refreshPipecatBridge]);
+
+  const refreshVisionModels = useCallback(async () => {
+    const port = pipecatBridge?.port;
+    if (port) {
+      try {
+        const res = await fetch(`http://localhost:${port}/robot/vision/models`);
+        const data = await res.json();
+        if (data.success && data.models?.length > 0) {
+          setOllamaModels(data.models);
+          return;
+        }
+      } catch {}
+    }
+    try {
+      const res = await fetch(`${aiConfig.baseUrl}/api/tags`);
+      if (res.ok) {
+        const data = await res.json();
+        setOllamaModels(data.models || []);
+      }
+    } catch {}
+  }, [pipecatBridge?.port, aiConfig.baseUrl]);
+
+  // Auto-fetch vision models when bridge port is known
+  useEffect(() => {
+    if (!pipecatBridge?.port) return;
+    const baseUrl = `http://localhost:${pipecatBridge.port}`;
+    fetch(`${baseUrl}/robot/vision/current-model`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.model) setCurrentVisionModel(data.model);
+      })
+      .catch(() => {});
+    void refreshVisionModels();
+  }, [pipecatBridge?.port, refreshVisionModels]);
+
+  // When models load and no model is selected, default to the first one
+  useEffect(() => {
+    if (ollamaModels.length > 0 && !currentVisionModel) {
+      const first = ollamaModels[0];
+      const name = first.name || first.model;
+      if (name) setCurrentVisionModel(name);
+    }
+  }, [ollamaModels, currentVisionModel]);
+
+  // WASD keyboard controls for Manual Overdrive — only in Robot tab when toggled
+  useEffect(() => {
+    const keyMap: Record<string, string> = {
+      w: 'forward', a: 'turn_left', s: 'backward', d: 'turn_right',
+    };
+    const port = pipecatBridge?.port;
+    if (!port || !wasdMode || activeTab !== 'robot') return;
+    const baseUrl = `http://localhost:${port}`;
+    const sendCmd = (cmd: string) => {
+      fetch(`${baseUrl}/robot/command`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: cmd }),
+      }).catch(() => {});
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      const cmd = keyMap[e.key.toLowerCase()];
+      if (cmd) { e.preventDefault(); sendCmd(cmd); }
+      if (e.key === ' ') { e.preventDefault(); sendCmd('stop'); }
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (keyMap[e.key.toLowerCase()]) { e.preventDefault(); sendCmd('stop'); }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [pipecatBridge?.port, wasdMode, activeTab]);
 
   const startPipecatBridge = useCallback(async () => {
     setIsPipecatBridgeBusy(true);
@@ -1816,18 +1899,7 @@ const App: React.FC = () => {
     speech,
   ]);
 
-  useEffect(() => {
-    const fetchModels = async () => {
-      try {
-        const res = await fetch('http://localhost:5002/robot/vision/models');
-        const data = await res.json();
-        if (data.success) setOllamaModels(data.models);
-      } catch (e) {
-        console.error('Failed to fetch Ollama models:', e);
-      }
-    };
-    fetchModels();
-  }, []);
+
 
   const toggleVoice = useCallback(async () => {
     if (voiceState.isHandsFree) {
@@ -2006,6 +2078,12 @@ const App: React.FC = () => {
             <button onClick={() => setDarkMode(!darkMode)} className="text-gray-400 hover:text-white transition-colors">
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
+                      <div className="flex items-center space-x-1.5">
+                        <div className={`w-2 h-2 rounded-full ${pipecatBridge?.running ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className={`text-[10px] font-bold uppercase ${pipecatBridge?.running ? 'text-green-400' : 'text-red-400'}`}>
+                          {pipecatBridge?.running ? `B:${pipecatBridge.port}` : 'Bridge'}
+                        </span>
+                      </div>
             <ActivityIcon size={18} className={isConnected ? 'text-green-400 animate-pulse' : 'text-gray-500'} />
           </div>
         </header>
@@ -2583,68 +2661,183 @@ const App: React.FC = () => {
                           <BrainCircuit className="text-purple-400" size={20} />
                           <h3 className="font-bold">Autonomous Brain</h3>
                         </div>
+
                         <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
-                          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Selected Provider</p>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Ollama (Llama 3)</span>
-                            <div className="flex items-center space-x-1">
-                              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                              <span className="text-[10px] text-green-400 font-bold uppercase">Ready</span>
-                            </div>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-3 font-bold">AI Provider</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {(Object.keys(AI_PROVIDER_DEFAULTS) as AIProvider[]).map((provider) => (
+                              <button
+                                key={provider}
+                                onClick={() =>
+                                  setAiConfig((prev) => ({
+                                    ...prev,
+                                    provider,
+                                    model: AI_PROVIDER_DEFAULTS[provider].defaultModel,
+                                    baseUrl: AI_PROVIDER_DEFAULTS[provider].baseUrl,
+                                  }))
+                                }
+                                className={`p-2 rounded-xl text-[10px] font-black uppercase transition-all border ${
+                                  aiConfig.provider === provider
+                                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                                    : 'bg-black/20 border-white/5 text-gray-500 hover:border-white/20'
+                                }`}
+                              >
+                                {provider}
+                              </button>
+                            ))}
                           </div>
                         </div>
-                        <div className="p-4 bg-black/20 rounded-2xl border border-white/5 space-y-3">
+
+                        <div>
+                          <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-2 font-bold">Model</p>
+                          <select
+                            value={aiConfig.model}
+                            onChange={(e) => setAiConfig((prev) => ({ ...prev, model: e.target.value }))}
+                            className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
+                          >
+                            {availableModels.map((model) => (
+                              <option key={model} value={model} className="bg-slate-900">{model}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="flex items-center justify-between px-1">
+                          <span className="text-[10px] font-medium text-gray-400">Bridge</span>
+                          <div className="flex items-center space-x-1">
+                            <div className={`w-1.5 h-1.5 rounded-full ${pipecatBridge?.running ? 'bg-green-500' : 'bg-red-500'}`} />
+                            <span className={`text-[10px] font-bold uppercase ${pipecatBridge?.running ? 'text-green-400' : 'text-red-400'}`}>
+                              {pipecatBridge?.running ? 'Ready' : 'Offline'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-white/5 pt-4 space-y-3">
                           <div className="flex items-center justify-between">
                             <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Vision Brain</p>
-                            <button 
-                              onClick={async () => {
-                                try {
-                                  const res = await fetch('http://localhost:5002/robot/vision/models');
-                                  const data = await res.json();
-                                  if (data.success) setOllamaModels(data.models);
-                                } catch (e) { console.error(e); }
-                              }}
+                            <button
+                              onClick={() => void refreshVisionModels()}
                               className="p-1 hover:bg-white/5 rounded transition-colors"
                             >
                               <RefreshCw size={10} className="text-gray-500" />
                             </button>
                           </div>
-                          
-                          <select 
-                            onChange={(e) => fetch('http://localhost:5002/robot/vision/model', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ model: e.target.value })
-                            })}
+
+                          <select
+                            value={currentVisionModel}
+                            onChange={(e) => {
+                              setCurrentVisionModel(e.target.value);
+                              const port = pipecatBridge?.port;
+                              if (port) {
+                                fetch(`http://localhost:${port}/robot/vision/model`, {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ model: e.target.value }),
+                                }).catch(() => {});
+                              }
+                            }}
                             className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-500/50 transition-all appearance-none cursor-pointer"
                           >
                             {ollamaModels.length > 0 ? (
                               ollamaModels.map((m: any) => (
-                                <option key={m.name} value={m.name}>
-                                  {m.name} ({(m.size / (1024**3)).toFixed(1)} GB)
+                                <option key={m.name || m.model} value={m.name || m.model}>
+                                  {m.name || m.model}
                                 </option>
                               ))
                             ) : (
-                              <option>llava (Default)</option>
+                              <option value="">No vision models installed</option>
                             )}
                           </select>
+
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="text"
+                              placeholder="Install model (e.g. llava, moondream)..."
+                              className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-cyan-500/50 transition-all"
+                              onKeyDown={async (e) => {
+                                if (e.key !== 'Enter') return;
+                                const input = e.target as HTMLInputElement;
+                                const model = input.value.trim();
+                                if (!model) return;
+                                const port = pipecatBridge?.port;
+                                setVisionInstallStatus('installing');
+                                try {
+                                  const res = await fetch(`http://localhost:${port}/robot/vision/install`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ model }),
+                                  });
+                                  const data = await res.json();
+                                  if (data.success) {
+                                    setCurrentVisionModel(model);
+                                    void refreshVisionModels();
+                                  } else {
+                                    addLog('System', 'error', `Install failed: ${data.error || 'unknown error'}`);
+                                  }
+                                } catch (err: any) {
+                                  addLog('System', 'error', `Install error: ${err.message}`);
+                                }
+                                setVisionInstallStatus('idle');
+                                input.value = '';
+                              }}
+                            />
+                            <button
+                              onClick={async () => {
+                                const input = document.querySelector<HTMLInputElement>('[placeholder*="Install model"]');
+                                if (!input || !input.value.trim()) return;
+                                const model = input.value.trim();
+                                const port = pipecatBridge?.port;
+                                setVisionInstallStatus('installing');
+                                try {
+                                  const res = await fetch(`http://localhost:${port}/robot/vision/install`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ model }),
+                                  });
+                                  const data = await res.json();
+                                  if (data.success) {
+                                    setCurrentVisionModel(model);
+                                    void refreshVisionModels();
+                                  } else {
+                                    addLog('System', 'error', `Install failed: ${data.error || 'unknown error'}`);
+                                  }
+                                } catch (err: any) {
+                                  addLog('System', 'error', `Install error: ${err.message}`);
+                                }
+                                setVisionInstallStatus('idle');
+                                input.value = '';
+                              }}
+                              disabled={visionInstallStatus === 'installing'}
+                              className="px-3 py-2 bg-cyan-500/20 text-cyan-400 rounded-xl text-xs font-bold hover:bg-cyan-500/30 transition-colors disabled:opacity-50 whitespace-nowrap"
+                            >
+                              {visionInstallStatus === 'installing' ? '...' : 'Install'}
+                            </button>
+                          </div>
 
                           <div className="flex items-center justify-between px-1">
                             <span className="text-[10px] font-medium text-gray-400">Status</span>
                             <div className="flex items-center space-x-1">
-                              <div className="w-1 h-1 rounded-full bg-cyan-500 animate-pulse" />
-                              <span className="text-[10px] text-cyan-400 font-bold uppercase">Active</span>
+                              <div className={`w-1 h-1 rounded-full ${pipecatBridge?.running ? 'bg-cyan-500 animate-pulse' : 'bg-gray-500'}`} />
+                              <span className={`text-[10px] font-bold uppercase ${pipecatBridge?.running ? 'text-cyan-400' : 'text-gray-500'}`}>
+                                {pipecatBridge?.running ? (currentVisionModel || 'Idle') : 'Offline'}
+                              </span>
                             </div>
                           </div>
                         </div>
-                        <button 
-                          onClick={() => fetch('http://localhost:5002/robot/autonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enable: true }) })}
+
+                        <button
+                          onClick={() => {
+                            const port = pipecatBridge?.port;
+                            fetch(`http://localhost:${port}/robot/autonomy`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enable: true }) }).catch(() => {});
+                          }}
                           className="w-full px-4 py-3 bg-cyan-500 rounded-2xl text-white text-sm font-bold shadow-lg shadow-cyan-500/20 hover:scale-[1.02] transition-transform"
                         >
                           Enable Autonomy
                         </button>
-                        <button 
-                          onClick={() => fetch('http://localhost:5002/robot/autonomy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enable: false }) })}
+                        <button
+                          onClick={() => {
+                            const port = pipecatBridge?.port;
+                            fetch(`http://localhost:${port}/robot/autonomy`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enable: false }) }).catch(() => {});
+                          }}
                           className="w-full px-4 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-sm font-bold transition-all"
                         >
                           Disable Autonomy
@@ -2652,27 +2845,60 @@ const App: React.FC = () => {
                       </div>
 
                       <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
-                        <div className="flex items-center space-x-3">
-                          <ActivityIcon className="text-cyan-400" size={20} />
-                          <h3 className="font-bold">Manual Overdrive</h3>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <ActivityIcon className="text-cyan-400" size={20} />
+                            <h3 className="font-bold">Manual Overdrive</h3>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => setWasdMode((p) => !p)}
+                              className={`px-3 py-1 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all ${
+                                wasdMode
+                                  ? 'bg-green-500/20 text-green-400 border border-green-500/40 shadow-[0_0_10px_rgba(34,197,94,0.15)]'
+                                  : 'bg-white/5 text-gray-500 border border-white/10 hover:bg-white/10'
+                              }`}
+                            >
+                              WASD {wasdMode ? 'ON' : 'OFF'}
+                            </button>
+                            <span className="text-[10px] text-gray-500 font-mono">D-Pad</span>
+                          </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                          <div />
-                          <button onMouseDown={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'forward' }) })} className="p-4 bg-white/5 hover:bg-white/10 rounded-xl flex justify-center"><ChevronRight className="-rotate-90" /></button>
-                          <div />
-                          <button onMouseDown={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'turn_left' }) })} className="p-4 bg-white/5 hover:bg-white/10 rounded-xl flex justify-center"><ChevronRight className="rotate-180" /></button>
-                          <button onClick={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'stop' }) })} className="p-4 bg-red-500/20 text-red-400 rounded-xl flex justify-center hover:bg-red-500/30 transition-colors"><XCircle /></button>
-                          <button onMouseDown={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'turn_right' }) })} className="p-4 bg-white/5 hover:bg-white/10 rounded-xl flex justify-center"><ChevronRight /></button>
-                          <div />
-                          <button onMouseDown={() => fetch('http://localhost:5002/robot/command', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: 'backward' }) })} className="p-4 bg-white/5 hover:bg-white/10 rounded-xl flex justify-center"><ChevronRight className="rotate-90" /></button>
-                          <div />
-                        </div>
+                        {(() => {
+                          const baseUrl = pipecatBridge?.port ? `http://localhost:${pipecatBridge.port}` : 'http://localhost:5002';
+                          const send = (cmd: string) => fetch(`${baseUrl}/robot/command`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ command: cmd }) }).catch(() => {});
+                          const btn = (cmd: string, child: React.ReactNode) => (
+                            <button
+                              onMouseDown={() => send(cmd)}
+                              onMouseUp={() => send('stop')}
+                              onTouchStart={() => send(cmd)}
+                              onTouchEnd={() => send('stop')}
+                              className="p-4 bg-white/5 hover:bg-white/10 active:bg-white/20 rounded-xl flex justify-center transition-colors select-none"
+                            >{child}</button>
+                          );
+                          return (
+                            <div className="grid grid-cols-3 gap-2">
+                              <div />
+                              {btn('forward', <ChevronRight className="-rotate-90" />)}
+                              <div />
+                              {btn('turn_left', <ChevronRight className="rotate-180" />)}
+                              <button
+                                onClick={() => send('stop')}
+                                className="p-4 bg-red-500/20 text-red-400 rounded-xl flex justify-center hover:bg-red-500/30 transition-colors"
+                              ><XCircle /></button>
+                              {btn('turn_right', <ChevronRight />)}
+                              <div />
+                              {btn('backward', <ChevronRight className="rotate-90" />)}
+                              <div />
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
                     {/* Center Column: 3D Visualizer */}
                     <div className="lg:col-span-2 space-y-6">
-                      <SimulationView />
+                      <SimulationView bridgePort={pipecatBridge?.port} />
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="p-6 rounded-3xl bg-white/5 border border-white/10 space-y-4">
@@ -2904,8 +3130,6 @@ const App: React.FC = () => {
                         >
                           <option value="deepgram">Deepgram Streaming (Recommended)</option>
                           <option value="pipecat">Pipecat Local Whisper</option>
-                          <option value="browser">Browser Native (Fallback)</option>
-                          <option value="whisper-local">Whisper Local (planned bridge)</option>
                         </select>
                         {aiConfig.sttEngine === 'deepgram' && (
                           <input

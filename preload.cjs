@@ -1,6 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+  onPipecatBridgeStatus: (callback) => {
+    const handler = (_event, data) => callback(data);
+    ipcRenderer.on('pipecat-bridge-status', handler);
+    return () => ipcRenderer.removeListener('pipecat-bridge-status', handler);
+  },
   // Discovery
   onRobotDiscovered: (callback) => ipcRenderer.on('robot-discovered', (event, ip) => callback(ip)),
   startDiscovery: () => ipcRenderer.send('start-discovery'),
